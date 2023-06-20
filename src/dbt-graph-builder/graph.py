@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 
 import networkx as nx
 
-from dbt-graph-builder.gateway import (
+from dbt_graph_builder.gateway import (
     NodeProperties,
     SeparationLayer,
     TaskGraphConfiguration,
@@ -14,8 +14,8 @@ from dbt-graph-builder.gateway import (
     is_gateway_valid_dependency,
     should_gateway_be_added,
 )
-from dbt-graph-builder.node_type import NodeType
-from dbt-graph-builder.utils import (
+from dbt_graph_builder.node_type import NodeType
+from dbt_graph_builder.utils import (
     is_ephemeral_task,
     is_model_run_task,
     is_source_sensor_task,
@@ -262,7 +262,7 @@ class DbtAirflowGraph:
 
     @staticmethod
     def _build_multiple_deps_test_name(dependencies: tuple) -> str:
-        return "_".join((node_name.split(".")[-1] for node_name in dependencies)) + "_test"
+        return "_".join(node_name.split(".")[-1] for node_name in dependencies) + "_test"
 
 
 def _get_node_properties(node_name: str, manifest: Dict[str, Any]) -> NodeProperties:

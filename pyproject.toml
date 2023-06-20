@@ -50,6 +50,18 @@ profile = "black"
 [tool.black]
 line-length = 120
 
+[tool.flake8]
+max-line-length = 120
+extend-ignore = [
+    "E203",
+    "D100",  # public module
+    "D104",  # public package
+    "D105",  # magic methods
+    "DCO010", # duplicate of public method
+    "DCO060", # public attributes - they're already documented if it is a property.
+]
+exclude = ["build", "tests"]
+
 [tool.coverage.run]
 source = ["src"]
 omit = ["tests/*"]

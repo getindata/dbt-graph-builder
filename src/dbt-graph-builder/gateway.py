@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from dbt-graph-builder.utils import is_model_run_task
+from dbt_graph_builder.utils import is_model_run_task
 
 
 @dataclass

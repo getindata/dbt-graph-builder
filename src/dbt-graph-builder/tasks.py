@@ -1,6 +1,7 @@
 """Classes representing tasks corresponding to a single DBT model."""
 
-from typing import Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Dict, List, Optional
 
 from airflow.models.baseoperator import BaseOperator
 
@@ -20,7 +21,7 @@ class ModelExecutionTask:
     def __init__(  # type: ignore
         self,
         execution_airflow_task: BaseOperator,
-        test_airflow_task: Optional[BaseOperator] = None,
+        test_airflow_task: BaseOperator | None = None,
         task_group=None,
     ) -> None:
         self.execution_airflow_task = execution_airflow_task
@@ -31,10 +32,7 @@ class ModelExecutionTask:
         return (
             repr(self.task_group)
             if self.task_group
-            else repr(
-                [self.execution_airflow_task]
-                + ([self.test_airflow_task] if self.test_airflow_task else [])
-            )
+            else repr([self.execution_airflow_task] + ([self.test_airflow_task] if self.test_airflow_task else []))
         )
 
     def get_start_task(self):  # type: ignore
@@ -69,9 +67,9 @@ class ModelExecutionTasks:
 
     def __init__(
         self,
-        tasks: Dict[str, ModelExecutionTask],
-        starting_task_names: List[str],
-        ending_task_names: List[str],
+        tasks: dict[str, ModelExecutionTask],
+        starting_task_names: list[str],
+        ending_task_names: list[str],
     ) -> None:
         self._tasks = tasks
         self._starting_task_names = starting_task_names
@@ -95,7 +93,7 @@ class ModelExecutionTasks:
         """Count TaskGroups corresponding to a single DBT model."""
         return len(self._tasks)
 
-    def get_starting_tasks(self) -> List[ModelExecutionTask]:
+    def get_starting_tasks(self) -> list[ModelExecutionTask]:
         """
         Get a list of all DAG sources.
 
@@ -104,7 +102,7 @@ class ModelExecutionTasks:
         """
         return self._extract_by_keys(self._starting_task_names)
 
-    def get_ending_tasks(self) -> List[ModelExecutionTask]:
+    def get_ending_tasks(self) -> list[ModelExecutionTask]:
         """
         Get a list of all DAG sinks.
 
@@ -113,7 +111,7 @@ class ModelExecutionTasks:
         """
         return self._extract_by_keys(self._ending_task_names)
 
-    def _extract_by_keys(self, keys: Iterable[str]) -> List[ModelExecutionTask]:
+    def _extract_by_keys(self, keys: Iterable[str]) -> list[ModelExecutionTask]:
         tasks = []
         for key in keys:
             tasks.append(self._tasks[key])
