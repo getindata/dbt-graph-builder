@@ -12,23 +12,28 @@ on:
 
 jobs:
   linting:
-    name: Python 3.11 checks
+    name: Python ${{ matrix.python-version }} linting
     runs-on: ubuntu-latest
+    matrix:
+      python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
         with:
-          python-version: 3.11
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
       - uses: pre-commit/action@v3.0.0
 
   tests:
-    name: Python 3.11 tests
+    name: Python ${{ matrix.python-version }} tests
     runs-on: ubuntu-latest
+    matrix:
+      python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     steps:
       - uses: actions/checkout@v3
       - uses: pdm-project/setup-pdm@v3
         with:
-          python-version: 3.11
+          python-version: ${{ matrix.python-version }}
           cache: true
       - run: pdm install
       - run: pdm run pytest
