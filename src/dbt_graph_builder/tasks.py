@@ -12,14 +12,14 @@ class ModelExecutionTask:
         self,
         execution_airflow_task: BaseOperator,
         test_airflow_task: BaseOperator | None = None,
-        task_group=None,
+        task_group: BaseOperator | None = None,
     ) -> None:
-        """_summary_
+        """Initialize model's tasks.
 
         Args:
             execution_airflow_task (BaseOperator): _description_
             test_airflow_task (BaseOperator | None, optional): _description_. Defaults to None.
-            task_group (_type_, optional): _description_. Defaults to None.
+            task_group (BaseOperator | None, optional): _description_. Defaults to None.
         """
         self.execution_airflow_task = execution_airflow_task
         self.test_airflow_task = test_airflow_task
@@ -32,18 +32,24 @@ class ModelExecutionTask:
             else repr([self.execution_airflow_task] + ([self.test_airflow_task] if self.test_airflow_task else []))
         )
 
-    def get_start_task(self):  # type: ignore
+    def get_start_task(self) -> BaseOperator:
         """Return model's first task.
 
         It is either a whole TaskGroup or ``run`` task.
+
+        Returns:
+            BaseOperator: Model's first task.
         """
         return self.task_group or self.execution_airflow_task
 
-    def get_end_task(self):  # type: ignore
+    def get_end_task(self) -> BaseOperator:
         """Return model's last task.
 
         It is either a whole TaskGroup, ``test`` task, or ``run`` task, depending
         on version of Airflow and existence of ``test`` task.
+
+        Returns:
+            BaseOperator: Model's last task.
         """
         return self.task_group or self.test_airflow_task or self.execution_airflow_task
 
@@ -99,11 +105,10 @@ class ModelExecutionTasks:
         return self._extract_by_keys(self._starting_task_names)
 
     def get_ending_tasks(self) -> list[ModelExecutionTask]:
-        """
-        Get a list of all DAG sinks.
+        """Get a list of all DAG sinks.
 
-        :return: List of all DAG sinks.
-        :rtype: List[ModelExecutionTask]
+        Returns:
+            list[ModelExecutionTask]: List of all DAG sinks.
         """
         return self._extract_by_keys(self._ending_task_names)
 

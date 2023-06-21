@@ -56,7 +56,7 @@ class DbtAirflowGraph:
                 logging.info("Creating tasks for: " + node_name)
                 self._add_graph_node_for_multiple_deps_test(node_name, manifest_node, manifest)
 
-    def _add_gateway_execution_tasks(self, manifest: dict) -> None:
+    def _add_gateway_execution_tasks(self, manifest: dict[str, Any]) -> None:
         if self.configuration.gateway.separation_schemas.__len__() >= 2:
             separation_layers = self.configuration.gateway.separation_schemas
 
@@ -131,7 +131,7 @@ class DbtAirflowGraph:
             self._contract_test_nodes_same_deps(depends_on_tuple, test_node_names)
 
     def _add_execution_graph_node(
-        self, node_name: str, manifest_node: dict[str, Any], node_type: NodeType, manifest: dict
+        self, node_name: str, manifest_node: dict[str, Any], node_type: NodeType, manifest: dict[str, Any]
     ) -> None:
         self.graph.add_node(
             node_name,
@@ -148,7 +148,7 @@ class DbtAirflowGraph:
             node_type=NodeType.SOURCE_SENSOR,
         )
 
-    def _add_gateway_node(self, manifest: dict, separation_layer: SeparationLayer) -> None:
+    def _add_gateway_node(self, manifest: dict[str, Any], separation_layer: SeparationLayer) -> None:
         node_name = create_gateway_name(
             separation_layer=separation_layer,
             gateway_task_name=self.configuration.gateway.gateway_task_name,
@@ -160,7 +160,9 @@ class DbtAirflowGraph:
             node_type=NodeType.MOCK_GATEWAY,
         )
 
-    def _add_graph_node_for_model_run_task(self, node_name: str, manifest_node: dict[str, Any], manifest: dict) -> None:
+    def _add_graph_node_for_model_run_task(
+        self, node_name: str, manifest_node: dict[str, Any], manifest: dict[str, Any]
+    ) -> None:
         self._add_execution_graph_node(
             node_name,
             manifest_node,
@@ -169,7 +171,7 @@ class DbtAirflowGraph:
         )
 
     def _add_graph_node_for_multiple_deps_test(
-        self, node_name: str, manifest_node: dict[str, Any], manifest: dict
+        self, node_name: str, manifest_node: dict[str, Any], manifest: dict[str, Any]
     ) -> None:
         self._add_execution_graph_node(node_name, manifest_node, NodeType.MULTIPLE_DEPS_TEST, manifest)
 
@@ -208,7 +210,7 @@ class DbtAirflowGraph:
             copy=False,
         )
 
-    def _get_model_dependencies_from_manifest_node(self, node: dict[str, Any], manifest: dict) -> list[str]:
+    def _get_model_dependencies_from_manifest_node(self, node: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
         filtered_records = list(filter(DbtAirflowGraph._is_valid_dependency, node["depends_on"]["nodes"]))
         node_schema = node.get("schema", None)
 
@@ -230,7 +232,7 @@ class DbtAirflowGraph:
     def _filter_to_gateway_conditions(
         self,
         node_schema_index: int,
-        manifest: dict,
+        manifest: dict[str, Any],
         node: dict[str, Any],
         filtered_records: list[str],
     ) -> list[str]:
@@ -261,10 +263,10 @@ class DbtAirflowGraph:
 
     @staticmethod
     def _is_valid_dependency(node_name: str) -> bool:
-        return is_model_run_task(node_name) or is_source_sensor_task(node_name)
+        return is_model_run_task(node_name) or is_source_sensor_task(node_name)  # type: ignore
 
     @staticmethod
-    def _build_multiple_deps_test_name(dependencies: tuple) -> str:
+    def _build_multiple_deps_test_name(dependencies: tuple[str, ...]) -> str:
         return "_".join(node_name.split(".")[-1] for node_name in dependencies) + "_test"
 
 

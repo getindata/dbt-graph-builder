@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from dbt_graph_builder.utils import is_model_run_task
 
@@ -55,7 +56,7 @@ def is_gateway_valid_dependency(
     return True
 
 
-def get_gateway_dependencies(manifest: dict, separation_layer: SeparationLayer) -> list:
+def get_gateway_dependencies(manifest: dict[str, Any], separation_layer: SeparationLayer) -> list[str]:
     """Get gateway dependencies.
 
     Args:
@@ -82,7 +83,7 @@ def get_gateway_dependencies(manifest: dict, separation_layer: SeparationLayer) 
     return dependencies
 
 
-def _get_downstream_dependencies(manifest: dict, separation_layer_right: str) -> list:
+def _get_downstream_dependencies(manifest: dict[str, Any], separation_layer_right: str) -> list[str]:
     downstream_dependencies = [
         node_name for node_name, values in manifest["nodes"].items() if values["schema"] == separation_layer_right
     ]
@@ -90,8 +91,8 @@ def _get_downstream_dependencies(manifest: dict, separation_layer_right: str) ->
 
 
 def _get_upstream_dependencies_connected_to_downstream(
-    manifest: dict, separation_layer_left: str, downstream_dependencies: list[str]
-) -> list:
+    manifest: dict[str, Any], separation_layer_left: str, downstream_dependencies: list[str]
+) -> list[str]:
     upstream_deps_connected_to_downstream: list[str] = []
 
     for downstream_node in downstream_dependencies:
@@ -108,7 +109,7 @@ def _get_upstream_dependencies_connected_to_downstream(
 
 def _add_upstream_dep_based_on_downstream(
     dep: str,
-    manifest: dict,
+    manifest: dict[str, Any],
     separation_layer_left: str,
     upstream_dependencies_connected_to_downstream: list[str],
 ) -> None:
