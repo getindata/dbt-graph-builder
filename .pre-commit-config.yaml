@@ -34,7 +34,6 @@ repos:
           - flake8-isort
           - flake8-docstrings
           - flake8-docstrings-complete
-        pass_filenames: false
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.7.0
@@ -51,4 +50,3 @@ repos:
       rev: 'v1.3.0'
       hooks:
         - id: mypy
-          pass_filenames: false
