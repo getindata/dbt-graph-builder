@@ -1,12 +1,12 @@
 name: Python Publish Workflow
 on:
+  pull_request:
   workflow_run:
     workflows:
       - "Linting and Tests"
     branches:
       - master
       - main
-      - refactoring
     types:
       - completed
 
