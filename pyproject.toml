@@ -22,6 +22,7 @@ classifiers = [
 ]
 dependencies = [
     "pyspark>=3.4.0",
+    "apache-airflow>=2.6.2",
 ]
 requires-python = ">=3.7"
 readme = "README.md"

@@ -1,7 +1,6 @@
 """Classes representing tasks corresponding to a single DBT model."""
 
 from collections.abc import Iterable
-from typing import Dict, List, Optional
 
 from airflow.models.baseoperator import BaseOperator
 
