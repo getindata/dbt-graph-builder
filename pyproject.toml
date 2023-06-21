@@ -1,11 +1,14 @@
 [build-system]
-requires = ["flit_core >=3.2"]
-build-backend = "flit_core.buildapi"
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name =  "dbt-graph-builder"
-readme = "README.md"
-description = "A package to build a graph from dbt models"
+name = "dbt-graph-builder"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Piotr Tutak", email = "piotr.tutak@getindata.com"},
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -17,14 +20,15 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11"
 ]
+dependencies = [
+    "pyspark>=3.4.0",
+]
 requires-python = ">=3.7"
-dynamic = ["version"]
+readme = "README.md"
+license = {file = "LICENSE"}
 
 [project.optional-dependencies]
-spark = [
-    "pyspark>=3.0.0"
-]
-test = [
+dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
