@@ -26,14 +26,6 @@ requires-python = ">=3.10"
 readme = "README.md"
 license = {file = "LICENSE"}
 
-[project.optional-dependencies]
-dev = [
-    "pre-commit",
-    "pytest",
-    "pytest-cov",
-    "pytest-github-actions-annotate-failures",
-]
-
 [tool.bandit]
 exclude_dirs = ["build","dist","tests","scripts"]
 number = 4
@@ -83,4 +75,12 @@ markers = [
     "spark: marks tests which need Spark",
     "slow: marks tests as slow",
     "unit: fast offline tests",
+]
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "pytest-github-actions-annotate-failures",
 ]
