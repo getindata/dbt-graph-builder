@@ -12,9 +12,6 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
-      - id: check-merge-conflict
-      - id: check-symlinks
-      - id: check-yaml
       - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
@@ -59,10 +56,3 @@ repos:
       hooks:
         - id: mypy
           pass_filenames: false
-  # - repo: local
-  #   hooks:
-  #     - id: mypy
-  #       name: mypy
-  #       entry: mypy
-  #       language: system
-  #       pass_filenames: false

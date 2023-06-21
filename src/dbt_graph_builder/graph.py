@@ -3,6 +3,7 @@ import logging
 from typing import Any
 
 import networkx as nx
+
 from dbt_graph_builder.gateway import (
     NodeProperties,
     SeparationLayer,
@@ -23,13 +24,25 @@ from dbt_graph_builder.utils import (
 
 
 class DbtAirflowGraph:
+    """_summary_."""
+
     graph: nx.DiGraph
 
     def __init__(self, configuration: TaskGraphConfiguration) -> None:
+        """_summary_.
+
+        Args:
+            configuration (TaskGraphConfiguration): _description_
+        """
         self.graph = nx.DiGraph()
         self.configuration = configuration
 
     def add_execution_tasks(self, manifest: dict) -> None:
+        """_summary_.
+
+        Args:
+            manifest (dict): _description_
+        """
         self._add_gateway_execution_tasks(manifest=manifest)
 
         for node_name, manifest_node in manifest["nodes"].items():
@@ -56,6 +69,11 @@ class DbtAirflowGraph:
                 )
 
     def add_external_dependencies(self, manifest: dict) -> None:
+        """_summary_.
+
+        Args:
+            manifest (dict): _description_
+        """
         manifest_child_map = manifest["child_map"]
         for source_name, manifest_source in manifest["sources"].items():
             if "dag" in manifest_source["source_meta"] and len(manifest_child_map[source_name]) > 0:

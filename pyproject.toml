@@ -23,6 +23,7 @@ classifiers = [
 dependencies = [
     "pyspark>=3.4.0",
     "apache-airflow>=2.6.2",
+    "networkx>=2.6.3",
 ]
 requires-python = ">=3.7"
 readme = "README.md"
@@ -59,6 +60,7 @@ extend-ignore = [
     "DCO060", # public attributes - they're already documented if it is a property.
 ]
 exclude = ["build", "tests"]
+convention = "google"
 
 [tool.mypy]
 packages = ["src"]

@@ -17,7 +17,7 @@ class ModelExecutionTask:
         (if Airflow version is at least 2).
     """
 
-    def __init__(  # type: ignore
+    def __init__(
         self,
         execution_airflow_task: BaseOperator,
         test_airflow_task: BaseOperator | None = None,
