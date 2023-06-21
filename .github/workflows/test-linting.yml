@@ -14,9 +14,6 @@ jobs:
   checks:
     name: Python ${{ matrix.python_version }} checks
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python_version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     steps:
       - uses: actions/checkout@v3
       - run: |
@@ -24,5 +21,5 @@ jobs:
           echo ${{ secrets.PYPI_PASSWORD }}
       - uses: actions/setup-python@v3
         with:
-          python-version: ${{ matrix.python_version }}
+          python-version: 3.11
       - uses: pre-commit/action@v3.0.0
