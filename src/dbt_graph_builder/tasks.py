@@ -6,16 +6,7 @@ from airflow.models.baseoperator import BaseOperator
 
 
 class ModelExecutionTask:
-    """
-    Wrapper around tasks corresponding to a single DBT model.
-
-    :param execution_airflow_task: Operator running DBT's ``run`` task.
-    :type execution_airflow_task: BaseOperator
-    :param test_airflow_task: Operator running DBT's ``test`` task (optional).
-    :type test_airflow_task: BaseOperator
-    :param task_group: TaskGroup consisting of ``run`` and ``test`` tasks
-        (if Airflow version is at least 2).
-    """
+    """Wrapper around tasks corresponding to a single DBT model."""
 
     def __init__(
         self,
@@ -23,6 +14,13 @@ class ModelExecutionTask:
         test_airflow_task: BaseOperator | None = None,
         task_group=None,
     ) -> None:
+        """_summary_
+
+        Args:
+            execution_airflow_task (BaseOperator): _description_
+            test_airflow_task (BaseOperator | None, optional): _description_. Defaults to None.
+            task_group (_type_, optional): _description_. Defaults to None.
+        """
         self.execution_airflow_task = execution_airflow_task
         self.test_airflow_task = test_airflow_task
         self.task_group = task_group
@@ -35,16 +33,14 @@ class ModelExecutionTask:
         )
 
     def get_start_task(self):  # type: ignore
-        """
-        Return model's first task.
+        """Return model's first task.
 
         It is either a whole TaskGroup or ``run`` task.
         """
         return self.task_group or self.execution_airflow_task
 
     def get_end_task(self):  # type: ignore
-        """
-        Return model's last task.
+        """Return model's last task.
 
         It is either a whole TaskGroup, ``test`` task, or ``run`` task, depending
         on version of Airflow and existence of ``test`` task.
@@ -53,16 +49,7 @@ class ModelExecutionTask:
 
 
 class ModelExecutionTasks:
-    """
-    Dictionary of all Operators corresponding to DBT tasks.
-
-    :param tasks: Dictionary of model tasks.
-    :type tasks: Dict[str, ModelExecutionTask]
-    :param starting_task_names: List of names of initial tasks (DAG sources).
-    :type starting_task_names: List[str]
-    :param ending_task_names: List of names of ending tasks (DAG sinks).
-    :type ending_task_names: List[str]
-    """
+    """Dictionary of all Operators corresponding to DBT tasks."""
 
     def __init__(
         self,
@@ -70,6 +57,13 @@ class ModelExecutionTasks:
         starting_task_names: list[str],
         ending_task_names: list[str],
     ) -> None:
+        """Create ModelExecutionTasks.
+
+        Args:
+            tasks (dict[str, ModelExecutionTask]): Dictionary of all Operators corresponding to DBT tasks.
+            starting_task_names (list[str]): List of all DAG sources.
+            ending_task_names (list[str]): List of all DAG sinks.
+        """
         self._tasks = tasks
         self._starting_task_names = starting_task_names
         self._ending_task_names = ending_task_names
@@ -78,26 +72,29 @@ class ModelExecutionTasks:
         return f"ModelExecutionTasks(\n {self._tasks} \n)"
 
     def get_task(self, node_name: str) -> ModelExecutionTask:
-        """
-        Return :class:`ModelExecutionTask` for given model's **node_name**.
+        """Get TaskGroup corresponding to a single DBT model.
 
-        :param node_name: Name of the task.
-        :type node_name: str
-        :return: Wrapper around tasks corresponding to a given model.
-        :rtype: ModelExecutionTask
+        Args:
+            node_name (str): Name of the DBT model.
+
+        Returns:
+            ModelExecutionTask: TaskGroup corresponding to a single DBT model.
         """
         return self._tasks[node_name]
 
     def length(self) -> int:
-        """Count TaskGroups corresponding to a single DBT model."""
+        """Count TaskGroups corresponding to a single DBT model.
+
+        Returns:
+            int: Number of TaskGroups corresponding to a single DBT model.
+        """
         return len(self._tasks)
 
     def get_starting_tasks(self) -> list[ModelExecutionTask]:
-        """
-        Get a list of all DAG sources.
+        """Return a list of all DAG sources.
 
-        :return: List of all DAG sources.
-        :rtype: List[ModelExecutionTask]
+        Returns:
+            list[ModelExecutionTask]: List of all DAG sources.
         """
         return self._extract_by_keys(self._starting_task_names)
 

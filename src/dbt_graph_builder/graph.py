@@ -29,7 +29,7 @@ class DbtAirflowGraph:
     graph: nx.DiGraph
 
     def __init__(self, configuration: TaskGraphConfiguration) -> None:
-        """_summary_.
+        """Create DbtAirflowGraph.
 
         Args:
             configuration (TaskGraphConfiguration): _description_
@@ -37,11 +37,11 @@ class DbtAirflowGraph:
         self.graph = nx.DiGraph()
         self.configuration = configuration
 
-    def add_execution_tasks(self, manifest: dict) -> None:
-        """_summary_.
+    def add_execution_tasks(self, manifest: dict[str, Any]) -> None:
+        """Add execution tasks.
 
         Args:
-            manifest (dict): _description_
+            manifest (dict): DBT manifest.
         """
         self._add_gateway_execution_tasks(manifest=manifest)
 
@@ -68,11 +68,11 @@ class DbtAirflowGraph:
                     separation_layer=SeparationLayer(left=separation_layer_left, right=separation_layer_right),
                 )
 
-    def add_external_dependencies(self, manifest: dict) -> None:
-        """_summary_.
+    def add_external_dependencies(self, manifest: dict[str, Any]) -> None:
+        """Add external dependencies.
 
         Args:
-            manifest (dict): _description_
+            manifest (dict): DBT manifest object.
         """
         manifest_child_map = manifest["child_map"]
         for source_name, manifest_source in manifest["sources"].items():
@@ -81,6 +81,11 @@ class DbtAirflowGraph:
                 self._add_sensor_source_node(source_name, manifest_source)
 
     def create_edges_from_dependencies(self, include_sensors: bool = False) -> None:
+        """_summary_.
+
+        Args:
+            include_sensors (bool, optional): _description_. Defaults to False.
+        """
         for graph_node_name, graph_node in self.graph.nodes(data=True):
             for dependency in graph_node.get("depends_on", []):
                 if is_source_sensor_task(dependency) and not include_sensors:
@@ -90,12 +95,23 @@ class DbtAirflowGraph:
                 self.graph.add_edge(dependency, graph_node_name)
 
     def get_graph_sources(self) -> list[str]:
+        """Return a list of graph source nodes.
+
+        Returns:
+            list[str]: A list of graph source nodes.
+        """
         return [node_name for node_name in self.graph.nodes() if len(list(self.graph.predecessors(node_name))) == 0]
 
     def get_graph_sinks(self) -> list[str]:
+        """Return a list of graph sink nodes.
+
+        Returns:
+            list[str]: A list of graph sink nodes.
+        """
         return [node_name for node_name in self.graph.nodes() if len(list(self.graph.successors(node_name))) == 0]
 
     def remove_ephemeral_nodes_from_graph(self) -> None:
+        """Remove ephemeral nodes from the graph."""
         ephemeral_nodes = [
             node_name for node_name, node in self.graph.nodes(data=True) if node["node_type"] == NodeType.EPHEMERAL
         ]
@@ -109,6 +125,7 @@ class DbtAirflowGraph:
             self.graph.remove_node(node_name)
 
     def contract_test_nodes(self) -> None:
+        """Contract test nodes."""
         tests_with_more_deps = self._get_test_with_multiple_deps_names_by_deps()
         for depends_on_tuple, test_node_names in tests_with_more_deps.items():
             self._contract_test_nodes_same_deps(depends_on_tuple, test_node_names)
