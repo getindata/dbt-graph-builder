@@ -11,15 +11,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  checks:
-    name: Python ${{ matrix.python_version }} checks
+  linting:
+    name: Python 3.11 checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo ${{ secrets.PYPI_USERNAME }}
-          echo ${{ secrets.PYPI_PASSWORD }}
       - uses: actions/setup-python@v3
         with:
           python-version: 3.11
       - uses: pre-commit/action@v3.0.0
+
+  tests:
+    name: Python 3.11 tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: 3.11
+          cache: true
+      - run: pdm install
+      - run: pdm run pytest

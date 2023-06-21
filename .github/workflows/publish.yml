@@ -10,14 +10,12 @@ on:
       - completed
 
 jobs:
-  publish:
+  pypi-publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v3
       - uses: pdm-project/setup-pdm@v3
-      - run: |
-          pdm build
-          echo ${{ secrets.PYPI_USERNAME }}
-          echo ${{ secrets.PYPI_PASSWORD }}
       - name: Publish package distributions to PyPI
         run: pdm publish
