@@ -5,6 +5,7 @@ build-backend = "flit_core.buildapi"
 [project]
 name =  "dbt-graph-builder"
 readme = "README.md"
+description = "A package to build a graph from dbt models"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -30,14 +31,6 @@ test = [
     "pytest-github-actions-annotate-failures",
 ]
 
-[project.urls]
-Documentation = "https://github.com/microsoft/python-package-template/tree/main#readme"
-Source = "https://github.com/microsoft/python-package-template"
-Tracker = "https://github.com/microsoft/python-package-template/issues"
-
-[tool.flit.module]
-name = "python_package"
-
 [tool.bandit]
 exclude_dirs = ["build","dist","tests","scripts"]
 number = 4
@@ -61,6 +54,12 @@ extend-ignore = [
     "DCO060", # public attributes - they're already documented if it is a property.
 ]
 exclude = ["build", "tests"]
+
+[tool.mypy]
+packages = ["src"]
+exclude = ["tests"]
+ignore_missing_imports = true
+strict = true
 
 [tool.coverage.run]
 source = ["src"]
