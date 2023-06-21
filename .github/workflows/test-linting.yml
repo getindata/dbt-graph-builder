@@ -36,5 +36,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: true
-      - run: pdm install
+      - run: pdm install -d
       - run: pdm run pytest
