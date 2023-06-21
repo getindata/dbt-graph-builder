@@ -12,7 +12,7 @@ class NodeProperties:
 
 @dataclass
 class GatewayConfiguration:
-    separation_schemas: List[str]
+    separation_schemas: list[str]
     gateway_task_name: str
 
 
@@ -38,40 +38,35 @@ def is_gateway_valid_dependency(
     return True
 
 
-def get_gateway_dependencies(manifest: dict, separation_layer: SeparationLayer) -> List:
+def get_gateway_dependencies(manifest: dict, separation_layer: SeparationLayer) -> list:
     downstream_dependencies = _get_downstream_dependencies(
         manifest=manifest, separation_layer_right=separation_layer.right
     )
 
-    upstream_dependencies_connected_to_downstream = (
-        _get_upstream_dependencies_connected_to_downstream(
-            manifest=manifest,
-            separation_layer_left=separation_layer.left,
-            downstream_dependencies=downstream_dependencies,
-        )
+    upstream_dependencies_connected_to_downstream = _get_upstream_dependencies_connected_to_downstream(
+        manifest=manifest,
+        separation_layer_left=separation_layer.left,
+        downstream_dependencies=downstream_dependencies,
     )
     dependencies = [
         node_name
         for node_name, values in manifest["nodes"].items()
-        if values["schema"] == separation_layer.left
-        and node_name in upstream_dependencies_connected_to_downstream
+        if values["schema"] == separation_layer.left and node_name in upstream_dependencies_connected_to_downstream
     ]
     return dependencies
 
 
-def _get_downstream_dependencies(manifest: dict, separation_layer_right: str) -> List:
+def _get_downstream_dependencies(manifest: dict, separation_layer_right: str) -> list:
     downstream_dependencies = [
-        node_name
-        for node_name, values in manifest["nodes"].items()
-        if values["schema"] == separation_layer_right
+        node_name for node_name, values in manifest["nodes"].items() if values["schema"] == separation_layer_right
     ]
     return downstream_dependencies
 
 
 def _get_upstream_dependencies_connected_to_downstream(
-    manifest: dict, separation_layer_left: str, downstream_dependencies: List[str]
-) -> List:
-    upstream_deps_connected_to_downstream: List[str] = []
+    manifest: dict, separation_layer_left: str, downstream_dependencies: list[str]
+) -> list:
+    upstream_deps_connected_to_downstream: list[str] = []
 
     for downstream_node in downstream_dependencies:
         upstream_deps = manifest["nodes"][downstream_node]["depends_on"]["nodes"]
@@ -89,14 +84,14 @@ def _add_upstream_dep_based_on_downstream(
     dep: str,
     manifest: dict,
     separation_layer_left: str,
-    upstream_dependencies_connected_to_downstream: List[str],
+    upstream_dependencies_connected_to_downstream: list[str],
 ) -> None:
     if is_model_run_task(dep) and manifest["nodes"][dep]["schema"] == separation_layer_left:
         upstream_dependencies_connected_to_downstream.append(dep)
 
 
 def add_gateway_to_dependencies(
-    gateway_name: str, filtered_dependencies: List[str], filtered_records: List[str]
+    gateway_name: str, filtered_dependencies: list[str], filtered_records: list[str]
 ) -> None:
     if len(filtered_dependencies) < len(filtered_records):
         filtered_dependencies.append(gateway_name)
@@ -106,7 +101,7 @@ def create_gateway_name(separation_layer: SeparationLayer, gateway_task_name: st
     return f"{separation_layer.left}_{separation_layer.right}_{gateway_task_name}"
 
 
-def should_gateway_be_added(node_schema: str, separation_schemas: List[str]) -> bool:
+def should_gateway_be_added(node_schema: str, separation_schemas: list[str]) -> bool:
     valid_schemas_input_length = len(separation_schemas) >= 2
     schema_is_in_given_schemas = node_schema in separation_schemas
     return valid_schemas_input_length and schema_is_in_given_schemas
