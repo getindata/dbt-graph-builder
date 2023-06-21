@@ -3,9 +3,9 @@ on:
   workflow_run:
     workflows:
       - Linting and Tests
-    branches:
-      - master
-      - main
+    # branches:
+    #   - master
+    #   - main
     types:
       - completed
 
