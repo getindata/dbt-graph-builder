@@ -13,11 +13,29 @@ on:
 jobs:
   pypi-publish:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
     steps:
       - uses: actions/checkout@v3
       - uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: build
-        run: pdm build
+        id: build
+        run: |
+          pdm build
+          echo "RELEASE_FILE_WHL=$(ls dist/*.whl)" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_FILE_TAR=$(ls dist/*.tar.gz)" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_VERSION=$(pdm show --version)" >> "$GITHUB_OUTPUT"
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: |
+            ${{ steps.build.outputs.RELEASE_FILE_WHL }}
+            ${{ steps.build.outputs.RELEASE_FILE_TAR }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.build.outputs.RELEASE_VERSION }}
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@v1.8.6
         with:
