@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dbt-graph-builder"
-version = "0.1.0"
+version = "0.0.1"
 description = "DBT Graph Builder"
 authors = [
     {name = "Piotr Tutak", email = "piotr.tutak@getindata.com"},
