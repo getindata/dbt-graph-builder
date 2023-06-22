@@ -35,4 +35,4 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: true
       - run: pdm install -d
-      - run: pdm run pytest
+      - run: pdm run pytest --cov --cov-report=term-missing
