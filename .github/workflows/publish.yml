@@ -20,7 +20,9 @@ jobs:
         run: pdm build
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@v1.8.6
+        permissions:
+          id-token: write
         with:
           user: __token__
           password: ${{ secrets.PYPI_PASSWORD }}
-          verbose: true  # trace if the upload fails
+          verbose: true
