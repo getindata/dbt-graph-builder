@@ -145,10 +145,10 @@ def create_gateway_name(separation_layer: SeparationLayer, gateway_task_name: st
 
 
 def should_gateway_be_added(node_schema: str, separation_schemas: list[str]) -> bool:
-    """_summary_.
+    """Check if the gateway should be added.
 
     Args:
-        node_schema (str): _description_
+        node_schema (str): Node schema.
         separation_schemas (list[str]): _description_
 
     Returns:
