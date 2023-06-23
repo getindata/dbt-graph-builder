@@ -44,7 +44,7 @@
 		"python.linting.mypyArgs": [
 			"--config-file",
 			".pyproject.toml"
-		],		
+		],
 		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
 		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
 		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
