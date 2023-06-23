@@ -23,19 +23,17 @@ from dbt_graph_builder.utils import (
 )
 
 
-class DbtAirflowGraph:
-    """_summary_."""
-
-    graph: nx.DiGraph
+class DbtManifestGraph:
+    """DbtManifestGraph class is used to create a DAG from DBT manifest.json file."""
 
     def __init__(self, configuration: TaskGraphConfiguration) -> None:
-        """Create DbtAirflowGraph.
+        """Create DbtManifestGraph.
 
         Args:
             configuration (TaskGraphConfiguration): _description_
         """
-        self.graph = nx.DiGraph()
-        self.configuration = configuration
+        self._graph = nx.DiGraph()
+        self._configuration = configuration
 
     def add_execution_tasks(self, manifest: dict[str, Any]) -> None:
         """Add execution tasks.
@@ -57,8 +55,8 @@ class DbtAirflowGraph:
                 self._add_graph_node_for_multiple_deps_test(node_name, manifest_node, manifest)
 
     def _add_gateway_execution_tasks(self, manifest: dict[str, Any]) -> None:
-        if self.configuration.gateway.separation_schemas.__len__() >= 2:
-            separation_layers = self.configuration.gateway.separation_schemas
+        if self._configuration.gateway.separation_schemas.__len__() >= 2:
+            separation_layers = self._configuration.gateway.separation_schemas
 
             for index, _ in enumerate(separation_layers[:-1]):
                 separation_layer_left = separation_layers[index]
@@ -81,18 +79,21 @@ class DbtAirflowGraph:
                 self._add_sensor_source_node(source_name, manifest_source)
 
     def create_edges_from_dependencies(self, include_sensors: bool = False) -> None:
-        """_summary_.
+        """Create edges from dependencies.
 
         Args:
-            include_sensors (bool, optional): _description_. Defaults to False.
+            include_sensors (bool, optional): If True, include sensors in the graph. Defaults to False.
         """
-        for graph_node_name, graph_node in self.graph.nodes(data=True):
+        for graph_node_name, graph_node in self._get_graph_nodes():
             for dependency in graph_node.get("depends_on", []):
                 if is_source_sensor_task(dependency) and not include_sensors:
                     continue
-                if not self.graph.has_node(dependency):
+                if not self._graph.has_node(dependency):
                     continue
-                self.graph.add_edge(dependency, graph_node_name)
+                self._graph.add_edge(dependency, graph_node_name)
+
+    def _get_graph_nodes(self) -> list[tuple[int, dict[str, str | list[str]]]]:
+        return self._graph.nodes(data=True)
 
     def get_graph_sources(self) -> list[str]:
         """Return a list of graph source nodes.
@@ -100,7 +101,7 @@ class DbtAirflowGraph:
         Returns:
             list[str]: A list of graph source nodes.
         """
-        return [node_name for node_name in self.graph.nodes() if len(list(self.graph.predecessors(node_name))) == 0]
+        return [node_name for node_name in self._graph.nodes() if len(list(self._graph.predecessors(node_name))) == 0]
 
     def get_graph_sinks(self) -> list[str]:
         """Return a list of graph sink nodes.
@@ -108,21 +109,21 @@ class DbtAirflowGraph:
         Returns:
             list[str]: A list of graph sink nodes.
         """
-        return [node_name for node_name in self.graph.nodes() if len(list(self.graph.successors(node_name))) == 0]
+        return [node_name for node_name in self._graph.nodes() if len(list(self._graph.successors(node_name))) == 0]
 
     def remove_ephemeral_nodes_from_graph(self) -> None:
         """Remove ephemeral nodes from the graph."""
         ephemeral_nodes = [
-            node_name for node_name, node in self.graph.nodes(data=True) if node["node_type"] == NodeType.EPHEMERAL
+            node_name for node_name, node in self._graph.nodes(data=True) if node["node_type"] == NodeType.EPHEMERAL
         ]
         for node_name in ephemeral_nodes:
-            self.graph.add_edges_from(
+            self._graph.add_edges_from(
                 itertools.product(
-                    list(self.graph.predecessors(node_name)),
-                    list(self.graph.successors(node_name)),
+                    list(self._graph.predecessors(node_name)),
+                    list(self._graph.successors(node_name)),
                 )
             )
-            self.graph.remove_node(node_name)
+            self._graph.remove_node(node_name)
 
     def contract_test_nodes(self) -> None:
         """Contract test nodes."""
@@ -133,7 +134,7 @@ class DbtAirflowGraph:
     def _add_execution_graph_node(
         self, node_name: str, manifest_node: dict[str, Any], node_type: NodeType, manifest: dict[str, Any]
     ) -> None:
-        self.graph.add_node(
+        self._graph.add_node(
             node_name,
             select=manifest_node["name"],
             depends_on=self._get_model_dependencies_from_manifest_node(manifest_node, manifest),
@@ -141,7 +142,7 @@ class DbtAirflowGraph:
         )
 
     def _add_sensor_source_node(self, node_name: str, manifest_node: dict[str, Any]) -> None:
-        self.graph.add_node(
+        self._graph.add_node(
             node_name,
             select=manifest_node["name"],
             dag=manifest_node["source_meta"]["dag"],
@@ -151,9 +152,9 @@ class DbtAirflowGraph:
     def _add_gateway_node(self, manifest: dict[str, Any], separation_layer: SeparationLayer) -> None:
         node_name = create_gateway_name(
             separation_layer=separation_layer,
-            gateway_task_name=self.configuration.gateway.gateway_task_name,
+            gateway_task_name=self._configuration.gateway.gateway_task_name,
         )
-        self.graph.add_node(
+        self._graph.add_node(
             node_name,
             select=node_name,
             depends_on=get_gateway_dependencies(separation_layer=separation_layer, manifest=manifest),
@@ -180,7 +181,7 @@ class DbtAirflowGraph:
     ) -> dict[tuple[str, ...], list[str]]:
         tests_with_more_deps: dict[tuple[str, ...], list[str]] = {}
 
-        for node_name, node in self.graph.nodes(data=True):
+        for node_name, node in self._graph.nodes(data=True):
             if node["node_type"] == NodeType.MULTIPLE_DEPS_TEST:
                 model_dependencies = node["depends_on"]
                 model_dependencies.sort()
@@ -191,34 +192,34 @@ class DbtAirflowGraph:
         return tests_with_more_deps
 
     def _contract_test_nodes_same_deps(self, depends_on_tuple: tuple[str, ...], test_node_names: list[str]) -> None:
-        test_names = [self.graph.nodes[test_node]["select"] for test_node in test_node_names]
+        test_names = [self._graph.nodes[test_node]["select"] for test_node in test_node_names]
 
         first_test_node = test_node_names[0]
         for test_node in test_node_names[1:]:
             nx.contracted_nodes(
-                self.graph,
+                self._graph,
                 first_test_node,
                 test_node,
                 self_loops=False,
                 copy=False,  # in-memory
             )
 
-        self.graph.nodes[first_test_node]["select"] = " ".join(test_names)
+        self._graph.nodes[first_test_node]["select"] = " ".join(test_names)
         nx.relabel_nodes(
-            self.graph,
+            self._graph,
             {first_test_node: self._build_multiple_deps_test_name(depends_on_tuple)},
             copy=False,
         )
 
     def _get_model_dependencies_from_manifest_node(self, node: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
-        filtered_records = list(filter(DbtAirflowGraph._is_valid_dependency, node["depends_on"]["nodes"]))
+        filtered_records = list(filter(DbtManifestGraph._is_valid_dependency, node["depends_on"]["nodes"]))
         node_schema = node.get("schema", None)
 
         if should_gateway_be_added(
             node_schema=node_schema,
-            separation_schemas=self.configuration.gateway.separation_schemas,
+            separation_schemas=self._configuration.gateway.separation_schemas,
         ):
-            node_schema_index = self.configuration.gateway.separation_schemas.index(node_schema)
+            node_schema_index = self._configuration.gateway.separation_schemas.index(node_schema)
             if node_schema_index >= 1:
                 filtered_records = self._filter_to_gateway_conditions(
                     node_schema_index=node_schema_index,
@@ -236,7 +237,7 @@ class DbtAirflowGraph:
         node: dict[str, Any],
         filtered_records: list[str],
     ) -> list[str]:
-        separation_layers = self.configuration.gateway.separation_schemas
+        separation_layers = self._configuration.gateway.separation_schemas
         separation_layer_left = separation_layers[node_schema_index - 1]
         separation_layer_right = separation_layers[node_schema_index]
 
@@ -256,7 +257,7 @@ class DbtAirflowGraph:
             filtered_records=filtered_records,
             gateway_name=create_gateway_name(
                 separation_layer=SeparationLayer(left=separation_layer_left, right=separation_layer_right),
-                gateway_task_name=self.configuration.gateway.gateway_task_name,
+                gateway_task_name=self._configuration.gateway.gateway_task_name,
             ),
         )
         return filtered_dependencies

@@ -120,26 +120,26 @@ def _add_upstream_dep_based_on_downstream(
 def add_gateway_to_dependencies(
     gateway_name: str, filtered_dependencies: list[str], filtered_records: list[str]
 ) -> None:
-    """_summary_.
+    """Add gateway to dependencies.
 
     Args:
-        gateway_name (str): _description_
-        filtered_dependencies (list[str]): _description_
-        filtered_records (list[str]): _description_
+        gateway_name (str): Gateway name.
+        filtered_dependencies (list[str]): Filtered dependencies.
+        filtered_records (list[str]): Filtered records.
     """
     if len(filtered_dependencies) < len(filtered_records):
         filtered_dependencies.append(gateway_name)
 
 
 def create_gateway_name(separation_layer: SeparationLayer, gateway_task_name: str) -> str:
-    """_summary_.
+    """Create gateway name.
 
     Args:
-        separation_layer (SeparationLayer): _description_
-        gateway_task_name (str): _description_
+        separation_layer (SeparationLayer): Separation layer.
+        gateway_task_name (str): Gateway task name.
 
     Returns:
-        str: _description_
+        str: Created gateway name.
     """
     return f"{separation_layer.left}_{separation_layer.right}_{gateway_task_name}"
 
@@ -149,10 +149,10 @@ def should_gateway_be_added(node_schema: str, separation_schemas: list[str]) -> 
 
     Args:
         node_schema (str): Node schema.
-        separation_schemas (list[str]): _description_
+        separation_schemas (list[str]): Separation schemas.
 
     Returns:
-        bool: _description_
+        bool: True if the gateway should be added, False otherwise.
     """
     valid_schemas_input_length = len(separation_schemas) >= 2
     schema_is_in_given_schemas = node_schema in separation_schemas

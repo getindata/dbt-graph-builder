@@ -1,0 +1,47 @@
+{
+  "nodes": {
+    "model.dbt_test.model1": {
+      "name": "model1",
+      "depends_on": {
+        "nodes": []
+      },
+      "config": {
+        "materialized": "view"
+      }
+    },
+    "model.dbt_test.model2": {
+      "name": "model2",
+      "depends_on": {
+        "nodes": [
+          "model.dbt_test.model1"
+        ]
+      },
+      "config": {
+        "materialized": "view"
+      }
+    },
+    "model.dbt_test.model3": {
+      "name": "model3",
+      "depends_on": {
+        "nodes": [
+          "model.dbt_test.model1"
+        ]
+      },
+      "config": {
+        "materialized": "view"
+      }
+    },
+    "model.dbt_test.model4": {
+      "name": "model4",
+      "depends_on": {
+        "nodes": [
+          "model.dbt_test.model2",
+          "model.dbt_test.model3"
+        ]
+      },
+      "config": {
+        "materialized": "view"
+      }
+    }
+  }
+}

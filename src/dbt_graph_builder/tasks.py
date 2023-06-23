@@ -55,7 +55,7 @@ class ModelExecutionTask:
 
 
 class ModelExecutionTasks:
-    """Dictionary of all Operators corresponding to DBT tasks."""
+    """Wrapper around tasks corresponding to all DBT models."""
 
     def __init__(
         self,
@@ -113,7 +113,7 @@ class ModelExecutionTasks:
         return self._extract_by_keys(self._ending_task_names)
 
     def _extract_by_keys(self, keys: Iterable[str]) -> list[ModelExecutionTask]:
-        tasks = []
+        tasks: list[ModelExecutionTask] = []
         for key in keys:
             tasks.append(self._tasks[key])
         return tasks
