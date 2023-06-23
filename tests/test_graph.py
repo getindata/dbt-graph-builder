@@ -100,7 +100,7 @@ gateway_config = GatewayConfiguration(
 def test_is_gateway_valid_dependency(
     test_name: str,
     manifest: dict,
-    node: Dict[str, Any],
+    node: dict[str, Any],
     dependency_node_name: str,
     gateway_config: GatewayConfiguration,
     expected_value: bool,

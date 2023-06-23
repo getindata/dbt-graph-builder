@@ -1,11 +1,6 @@
+from typing import Any
 import json
-import os
 import tempfile
-from datetime import datetime
-
-from airflow import DAG
-
-from dbt_airflow_factory.builder_factory import DbtAirflowTasksBuilderFactory
 
 
 def manifest_file_with_models(nodes_with_dependencies: dict, extra_metadata: dict = None):
@@ -24,26 +19,18 @@ def manifest_file_with_models(nodes_with_dependencies: dict, extra_metadata: dic
         return tmp.name
 
 
-def builder_factory(use_task_group=True, enable_project_dependencies=False, env="dev"):
-    return DbtAirflowTasksBuilderFactory(
-        os.path.dirname(os.path.abspath(__file__)),
-        env,
-        {
-            "enable_project_dependencies": enable_project_dependencies,
-            "use_task_group": use_task_group,
-        },
-    )
+def get_default_airflow_config(enable_dags_dependencies: bool = False, use_task_group: bool = False, show_ephemeral_models: bool = True) -> dict[str, Any]:
+    return {
+        "enable_dags_dependencies": enable_dags_dependencies,
+        "use_task_group": use_task_group,
+        "show_ephemeral_models": show_ephemeral_models,
+    }
 
 
-def test_dag():
-    return DAG("test", default_args={"start_date": datetime(2021, 10, 13)})
-
-
-def task_group_prefix_builder(task_model_id: str, task_command: str) -> str:
-    from dbt_airflow_factory.constants import IS_FIRST_AIRFLOW_VERSION
+def task_group_prefix_builder(task_model_id: str, task_command: str, is_first_airflow_version: bool = False) -> str:
 
     return (
         f"{task_model_id}_{task_command}"
-        if IS_FIRST_AIRFLOW_VERSION
+        if is_first_airflow_version
         else f"{task_model_id}.{task_command}"
     )

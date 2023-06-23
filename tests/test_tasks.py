@@ -1,7 +1,7 @@
 from os import path
 
-from dbt_airflow_factory.builder_factory import DbtAirflowTasksBuilderFactory
-from dbt_airflow_factory.constants import IS_FIRST_AIRFLOW_VERSION
+
+from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest, create_gateway_config
 
 from .utils import (
     builder_factory,
@@ -16,8 +16,12 @@ def test_get_dag():
     manifest_path = manifest_file_with_models({"model.dbt_test.dim_users": []})
 
     # when
-    with test_dag():
-        tasks = builder_factory().create().parse_manifest_into_tasks(manifest_path)
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     assert tasks.length() == 1
@@ -31,8 +35,12 @@ def test_run_task():
     manifest_path = manifest_file_with_models({"model.dbt_test.dim_users": []})
 
     # when
-    with test_dag():
-        tasks = builder_factory().create().parse_manifest_into_tasks(manifest_path)
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     run_task = tasks.get_task("model.dbt_test.dim_users").execution_airflow_task
@@ -49,8 +57,12 @@ def test_test_task():
     manifest_path = manifest_file_with_models({"model.dbt_test.dim_users": []})
 
     # when
-    with test_dag():
-        tasks = builder_factory().create().parse_manifest_into_tasks(manifest_path)
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     test_task = tasks.get_task("model.dbt_test.dim_users").test_airflow_task
@@ -68,8 +80,12 @@ def test_dbt_vars():
     factory = DbtAirflowTasksBuilderFactory(path.dirname(path.abspath(__file__)), "vars", {})
 
     # when
-    with test_dag():
-        tasks = factory.create().parse_manifest_into_tasks(manifest_path)
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     run_task = tasks.get_task("model.dbt_test.dim_users").execution_airflow_task

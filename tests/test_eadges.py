@@ -1,10 +1,7 @@
 from .utils import (
-    builder_factory,
     manifest_file_with_models,
-    task_group_prefix_builder,
-    test_dag,
 )
-
+from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest, create_gateway_config
 
 def test_starting_tasks():
     # given
@@ -19,13 +16,15 @@ def test_starting_tasks():
     )
 
     # when
-    with test_dag():
-        tasks = builder_factory().create().parse_manifest_into_tasks(manifest_path)
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
-    starting_tasks_names = [
-        task.execution_airflow_task.task_id for task in tasks.get_starting_tasks()
-    ]
+    starting_tasks_names = [task.execution_airflow_task.task_id for task in tasks.get_starting_tasks()]
     assert task_group_prefix_builder("model1", "run") in starting_tasks_names
     assert task_group_prefix_builder("model2", "run") in starting_tasks_names
     assert task_group_prefix_builder("model5", "run") in starting_tasks_names
@@ -44,8 +43,12 @@ def test_ending_tasks():
     )
 
     # when
-    with test_dag():
-        tasks = builder_factory().create().parse_manifest_into_tasks(manifest_path)
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     ending_tasks_names = [task.test_airflow_task.task_id for task in tasks.get_ending_tasks()]

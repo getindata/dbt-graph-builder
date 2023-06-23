@@ -1,7 +1,7 @@
 from os import path
 
-from dbt_airflow_factory.airflow_dag_factory import AirflowDagFactory
-from dbt_airflow_factory.operator import EphemeralOperator
+from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest, create_gateway_config
+
 from tests.utils import task_group_prefix_builder, test_dag
 
 
@@ -14,7 +14,12 @@ def test_ephemeral_dag_factory():
     factory = AirflowDagFactory(path.dirname(path.abspath(__file__)), "ephemeral_operator")
 
     # when
-    dag = factory.create()
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     assert len(dag.tasks) == 16
@@ -51,7 +56,12 @@ def test_no_ephemeral_dag_factory():
     factory = AirflowDagFactory(path.dirname(path.abspath(__file__)), "no_ephemeral_operator")
 
     # when
-    dag = factory.create()
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     assert len(dag.tasks) == 8
@@ -73,7 +83,13 @@ def test_no_ephemeral_dag_factory():
 def test_ephemeral_tasks():
     with test_dag():
         factory = AirflowDagFactory(path.dirname(path.abspath(__file__)), "ephemeral_operator")
-        tasks = factory._builder.parse_manifest_into_tasks(factory._manifest_file_path())
+
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     assert (
@@ -89,50 +105,28 @@ def test_ephemeral_tasks():
         task_group_prefix_builder("model1", "test")
         in tasks.get_task("model.dbt_test.model2").execution_airflow_task.upstream_task_ids
     )
-    assert (
-        "model2__ephemeral"
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-    )
+    assert "model2__ephemeral" in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
 
-    assert (
-        "model2__ephemeral"
-        in tasks.get_task("model.dbt_test.model3").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        "model3__ephemeral"
-        in tasks.get_task("model.dbt_test.model5").execution_airflow_task.downstream_task_ids
-    )
+    assert "model2__ephemeral" in tasks.get_task("model.dbt_test.model3").execution_airflow_task.upstream_task_ids
+    assert "model3__ephemeral" in tasks.get_task("model.dbt_test.model5").execution_airflow_task.downstream_task_ids
 
-    assert (
-        "model3__ephemeral"
-        in tasks.get_task("model.dbt_test.model10").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        "model9__ephemeral"
-        in tasks.get_task("model.dbt_test.model10").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        "model10__ephemeral"
-        in tasks.get_task("model.dbt_test.model3").execution_airflow_task.downstream_task_ids
-    )
-    assert (
-        "model10__ephemeral"
-        in tasks.get_task("model.dbt_test.model9").execution_airflow_task.downstream_task_ids
-    )
-    assert (
-        "model11__ephemeral"
-        in tasks.get_task("model.dbt_test.model10").execution_airflow_task.downstream_task_ids
-    )
-    assert (
-        "model10__ephemeral"
-        in tasks.get_task("model.dbt_test.model11").execution_airflow_task.upstream_task_ids
-    )
+    assert "model3__ephemeral" in tasks.get_task("model.dbt_test.model10").execution_airflow_task.upstream_task_ids
+    assert "model9__ephemeral" in tasks.get_task("model.dbt_test.model10").execution_airflow_task.upstream_task_ids
+    assert "model10__ephemeral" in tasks.get_task("model.dbt_test.model3").execution_airflow_task.downstream_task_ids
+    assert "model10__ephemeral" in tasks.get_task("model.dbt_test.model9").execution_airflow_task.downstream_task_ids
+    assert "model11__ephemeral" in tasks.get_task("model.dbt_test.model10").execution_airflow_task.downstream_task_ids
+    assert "model10__ephemeral" in tasks.get_task("model.dbt_test.model11").execution_airflow_task.upstream_task_ids
 
 
 def test_no_ephemeral_tasks():
-    with test_dag():
-        factory = AirflowDagFactory(path.dirname(path.abspath(__file__)), "no_ephemeral_operator")
-        tasks = factory._builder.parse_manifest_into_tasks(factory._manifest_file_path())
+    factory = AirflowDagFactory(path.dirname(path.abspath(__file__)), "no_ephemeral_operator")
+
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     assert (

@@ -1,15 +1,14 @@
-from .utils import (
-    builder_factory,
-    manifest_file_with_models,
-    task_group_prefix_builder,
-    test_dag,
+from dbt_graph_builder.builder import (
+    create_gateway_config,
+    create_tasks_graph,
+    load_dbt_manifest,
 )
+
+from .utils import manifest_file_with_models
 
 extra_metadata_data = {
     "child_map": {
-        "source.upstream_pipeline_sources.upstream_pipeline.some_final_model": [
-            "model.dbt_test.dependent_model"
-        ],
+        "source.upstream_pipeline_sources.upstream_pipeline.some_final_model": ["model.dbt_test.dependent_model"],
         "source.upstream_pipeline_sources.upstream_pipeline.unused": [],
     },
     "sources": {
@@ -41,26 +40,18 @@ extra_metadata_data = {
 def test_dag_sensor():
     # given
     manifest_path = manifest_file_with_models(
-        {
-            "model.dbt_test.dependent_model": [
-                "source.upstream_pipeline_sources.upstream_pipeline.some_final_model"
-            ]
-        },
+        {"model.dbt_test.dependent_model": ["source.upstream_pipeline_sources.upstream_pipeline.some_final_model"]},
         extra_metadata_data,
     )
-
-    # when
-    with test_dag():
-        tasks = (
-            builder_factory(enable_project_dependencies=True)
-            .create()
-            .parse_manifest_into_tasks(manifest_path)
-        )
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
-    sensor_task = tasks.get_task(
-        "source.upstream_pipeline_sources.upstream_pipeline.some_final_model"
-    )
+    sensor_task = tasks.get_task("source.upstream_pipeline_sources.upstream_pipeline.some_final_model")
     assert tasks.length() == 2
     assert sensor_task is not None
     assert sensor_task.execution_airflow_task is not None
@@ -71,22 +62,17 @@ def test_dag_sensor():
 def test_dag_sensor_dependency():
     # given
     manifest_path = manifest_file_with_models(
-        {
-            "model.dbt_test.dependent_model": [
-                "source.upstream_pipeline_sources.upstream_pipeline.some_final_model"
-            ]
-        },
+        {"model.dbt_test.dependent_model": ["source.upstream_pipeline_sources.upstream_pipeline.some_final_model"]},
         extra_metadata_data,
     )
 
     # when
-    with test_dag():
-        tasks = (
-            builder_factory(enable_project_dependencies=True)
-            .create()
-            .parse_manifest_into_tasks(manifest_path)
-        )
-
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
     # then
     assert (
         "sensor_some_final_model"
@@ -113,12 +99,12 @@ def test_dag_sensor_no_meta():
     )
 
     # when
-    with test_dag():
-        tasks = (
-            builder_factory(enable_project_dependencies=True)
-            .create()
-            .parse_manifest_into_tasks(manifest_path)
-        )
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({}),
+        manifest=load_dbt_manifest(manifest_path),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
+    )
 
     # then
     assert tasks.length() == 2
