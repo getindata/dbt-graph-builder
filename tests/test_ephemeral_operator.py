@@ -5,156 +5,124 @@ from dbt_graph_builder.builder import (
     create_tasks_graph,
     load_dbt_manifest,
 )
-from tests.utils import task_group_prefix_builder, test_dag
+from dbt_graph_builder.node_type import NodeType
+from tests.utils import task_group_prefix_builder
 
 
-def _get_ephemeral_name(model_name: str) -> str:
-    return f"{model_name}__ephemeral"
-
-
-def test_ephemeral_dag_factory():
+def test_ephemeral_dag():
     # given
-    factory = AirflowDagFactory(path.dirname(path.abspath(__file__)), "ephemeral_operator")
-
     # when
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
-        manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
-        show_ephemeral_models=False,
+        manifest=load_dbt_manifest(path.join(path.dirname(__file__), "manifests/manifest_ephemeral.json")),
+        enable_dags_dependencies=False,
+        show_ephemeral_models=True,
     )
 
     # then
-    assert len(dag.tasks) == 16
-
-    task_group_names = [
-        el
-        for node_name in ["model1", "model4", "model6"]
-        for el in [
-            task_group_prefix_builder(node_name, "test"),
-            task_group_prefix_builder(node_name, "run"),
-        ]
+    assert list(graph.get_graph_nodes()) == [
+        (
+            "model.dbt_test.model1",
+            {"select": "model1", "depends_on": ["source.dbt_test.source1"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model.dbt_test.model2",
+            {"select": "model2", "depends_on": ["model.dbt_test.model1"], "node_type": NodeType.EPHEMERAL},
+        ),
+        (
+            "model.dbt_test.model3",
+            {
+                "select": "model3",
+                "depends_on": ["model.dbt_test.model2", "model.dbt_test.model5"],
+                "node_type": NodeType.EPHEMERAL,
+            },
+        ),
+        (
+            "model.dbt_test.model4",
+            {"select": "model4", "depends_on": ["model.dbt_test.model10"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model.dbt_test.model5",
+            {"select": "model5", "depends_on": ["source.dbt_test.source2"], "node_type": NodeType.EPHEMERAL},
+        ),
+        (
+            "model.dbt_test.model6",
+            {"select": "model6", "depends_on": ["source.dbt_test.source3"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model.dbt_test.model7",
+            {"select": "model7", "depends_on": ["model.dbt_test.model6"], "node_type": NodeType.EPHEMERAL},
+        ),
+        (
+            "model.dbt_test.model8",
+            {"select": "model8", "depends_on": ["model.dbt_test.model6"], "node_type": NodeType.EPHEMERAL},
+        ),
+        (
+            "model.dbt_test.model9",
+            {
+                "select": "model9",
+                "depends_on": ["model.dbt_test.model7", "model.dbt_test.model8"],
+                "node_type": NodeType.EPHEMERAL,
+            },
+        ),
+        (
+            "model.dbt_test.model10",
+            {
+                "select": "model10",
+                "depends_on": ["model.dbt_test.model3", "model.dbt_test.model9"],
+                "node_type": NodeType.EPHEMERAL,
+            },
+        ),
+        (
+            "model.dbt_test.model11",
+            {"select": "model11", "depends_on": ["model.dbt_test.model10"], "node_type": NodeType.EPHEMERAL},
+        ),
     ]
-    ephemeral_task_names = [
-        node_name + "__ephemeral"
-        for node_name in [
-            "model2",
-            "model3",
-            "model5",
-            "model7",
-            "model8",
-            "model9",
-            "model10",
-            "model11",
-        ]
+    assert list(graph.get_graph_edges()) == [
+        ("model.dbt_test.model1", "model.dbt_test.model2"),
+        ("model.dbt_test.model2", "model.dbt_test.model3"),
+        ("model.dbt_test.model3", "model.dbt_test.model10"),
+        ("model.dbt_test.model5", "model.dbt_test.model3"),
+        ("model.dbt_test.model6", "model.dbt_test.model7"),
+        ("model.dbt_test.model6", "model.dbt_test.model8"),
+        ("model.dbt_test.model7", "model.dbt_test.model9"),
+        ("model.dbt_test.model8", "model.dbt_test.model9"),
+        ("model.dbt_test.model9", "model.dbt_test.model10"),
+        ("model.dbt_test.model10", "model.dbt_test.model4"),
+        ("model.dbt_test.model10", "model.dbt_test.model11"),
     ]
-    assert set(dag.task_ids) == set(["dbt_seed", "end"] + task_group_names + ephemeral_task_names)
-
-    for ephemeral_task_name in ephemeral_task_names:
-        assert isinstance(dag.task_dict[ephemeral_task_name], EphemeralOperator)
+    assert graph.get_graph_sinks() == ["model.dbt_test.model4", "model.dbt_test.model11"]
+    assert graph.get_graph_sources() == ["model.dbt_test.model1", "model.dbt_test.model5", "model.dbt_test.model6"]
 
 
-def test_no_ephemeral_dag_factory():
+def test_no_ephemeral_dag():
     # given
-    factory = AirflowDagFactory(path.dirname(path.abspath(__file__)), "no_ephemeral_operator")
-
     # when
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
-        manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
+        manifest=load_dbt_manifest(path.join(path.dirname(__file__), "manifests/manifest_ephemeral.json")),
+        enable_dags_dependencies=False,
         show_ephemeral_models=False,
     )
 
     # then
-    assert len(dag.tasks) == 8
-
-    task_group_names = [
-        el
-        for node_name in ["model1", "model4", "model6"]
-        for el in [
-            task_group_prefix_builder(node_name, "test"),
-            task_group_prefix_builder(node_name, "run"),
-        ]
+    assert list(graph.get_graph_nodes()) == [
+        (
+            "model.dbt_test.model1",
+            {"select": "model1", "depends_on": ["source.dbt_test.source1"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model.dbt_test.model4",
+            {"select": "model4", "depends_on": ["model.dbt_test.model10"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model.dbt_test.model6",
+            {"select": "model6", "depends_on": ["source.dbt_test.source3"], "node_type": NodeType.RUN_TEST},
+        ),
     ]
-    assert set(dag.task_ids) == set(["dbt_seed", "end"] + task_group_names)
-
-    for task_name in task_group_names:
-        assert not isinstance(dag.task_dict[task_name], EphemeralOperator)
-
-
-def test_ephemeral_tasks():
-    with test_dag():
-        factory = AirflowDagFactory(path.dirname(path.abspath(__file__)), "ephemeral_operator")
-
-    graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
-        manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
-        show_ephemeral_models=False,
-    )
-
-    # then
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model1").execution_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model1", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.upstream_task_ids
-    )
-
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model2").execution_airflow_task.upstream_task_ids
-    )
-    assert "model2__ephemeral" in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-
-    assert "model2__ephemeral" in tasks.get_task("model.dbt_test.model3").execution_airflow_task.upstream_task_ids
-    assert "model3__ephemeral" in tasks.get_task("model.dbt_test.model5").execution_airflow_task.downstream_task_ids
-
-    assert "model3__ephemeral" in tasks.get_task("model.dbt_test.model10").execution_airflow_task.upstream_task_ids
-    assert "model9__ephemeral" in tasks.get_task("model.dbt_test.model10").execution_airflow_task.upstream_task_ids
-    assert "model10__ephemeral" in tasks.get_task("model.dbt_test.model3").execution_airflow_task.downstream_task_ids
-    assert "model10__ephemeral" in tasks.get_task("model.dbt_test.model9").execution_airflow_task.downstream_task_ids
-    assert "model11__ephemeral" in tasks.get_task("model.dbt_test.model10").execution_airflow_task.downstream_task_ids
-    assert "model10__ephemeral" in tasks.get_task("model.dbt_test.model11").execution_airflow_task.upstream_task_ids
-
-
-def test_no_ephemeral_tasks():
-    factory = AirflowDagFactory(path.dirname(path.abspath(__file__)), "no_ephemeral_operator")
-
-    graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
-        manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
-        show_ephemeral_models=False,
-    )
-
-    # then
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model1").execution_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model1", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.upstream_task_ids
-    )
-
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model4").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model4", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-    )
-
-    assert (
-        task_group_prefix_builder("model6", "test")
-        in tasks.get_task("model.dbt_test.model4").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model4", "run")
-        in tasks.get_task("model.dbt_test.model6").test_airflow_task.downstream_task_ids
-    )
+    assert list(graph.get_graph_edges()) == [
+        ("model.dbt_test.model1", "model.dbt_test.model4"),
+        ("model.dbt_test.model6", "model.dbt_test.model4"),
+    ]
+    assert graph.get_graph_sinks() == ["model.dbt_test.model4"]
+    assert graph.get_graph_sources() == ["model.dbt_test.model1", "model.dbt_test.model6"]

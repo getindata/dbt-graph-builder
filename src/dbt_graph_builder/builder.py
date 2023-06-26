@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any
+from typing import Any, cast
 
 from dbt_graph_builder.gateway import GatewayConfiguration, TaskGraphConfiguration
 from dbt_graph_builder.graph import DbtManifestGraph
@@ -15,6 +15,17 @@ def create_tasks_graph(
     enable_dags_dependencies: bool,
     show_ephemeral_models: bool,
 ) -> DbtManifestGraph:
+    """Create tasks graph.
+
+    Args:
+        gateway_config (GatewayConfiguration): Gateway configuration.
+        manifest (dict[str, Any]): Manifest.
+        enable_dags_dependencies (bool): If True, add external dependencies to the graph.
+        show_ephemeral_models (bool): If True, show ephemeral models in the graph.
+
+    Returns:
+        DbtManifestGraph: Tasks graph.
+    """
     LOGGER.info("Creating tasks graph")
     dbt_airflow_graph = DbtManifestGraph(TaskGraphConfiguration(gateway_config))
     dbt_airflow_graph.add_execution_tasks(manifest)
@@ -31,13 +42,29 @@ def create_tasks_graph(
 
 
 def load_dbt_manifest(manifest_path: os.PathLike[str] | str) -> dict[str, Any]:
+    """Load dbt manifest.
+
+    Args:
+        manifest_path (os.PathLike[str] | str): Path to dbt manifest.
+
+    Returns:
+        dict[str, Any]: Dbt manifest.
+    """
     LOGGER.info("Loading dbt manifest")
-    with open(manifest_path) as f:
-        manifest_content = json.load(f)
-        return manifest_content
+    with open(manifest_path) as file:
+        manifest_content = json.load(file)
+        return cast(dict[str, Any], manifest_content)
 
 
 def create_gateway_config(airflow_config: dict[str, Any]) -> GatewayConfiguration:
+    """Create gateway config.
+
+    Args:
+        airflow_config (dict[str, Any]): Airflow config.
+
+    Returns:
+        GatewayConfiguration: Gateway configuration.
+    """
     LOGGER.info("Creating gateway config")
     return GatewayConfiguration(
         separation_schemas=airflow_config.get("save_points", []),
