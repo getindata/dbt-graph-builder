@@ -1,7 +1,11 @@
-from .utils import (
-    manifest_file_with_models,
+from dbt_graph_builder.builder import (
+    create_gateway_config,
+    create_tasks_graph,
+    load_dbt_manifest,
 )
-from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest, create_gateway_config
+
+from .utils import manifest_file_with_models
+
 
 def test_starting_tasks():
     # given

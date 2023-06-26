@@ -1,6 +1,6 @@
-from typing import Any
 import json
 import tempfile
+from typing import Any
 
 
 def manifest_file_with_models(nodes_with_dependencies: dict, extra_metadata: dict = None):
@@ -19,7 +19,9 @@ def manifest_file_with_models(nodes_with_dependencies: dict, extra_metadata: dic
         return tmp.name
 
 
-def get_default_airflow_config(enable_dags_dependencies: bool = False, use_task_group: bool = False, show_ephemeral_models: bool = True) -> dict[str, Any]:
+def get_default_airflow_config(
+    enable_dags_dependencies: bool = False, use_task_group: bool = False, show_ephemeral_models: bool = True
+) -> dict[str, Any]:
     return {
         "enable_dags_dependencies": enable_dags_dependencies,
         "use_task_group": use_task_group,
@@ -28,9 +30,4 @@ def get_default_airflow_config(enable_dags_dependencies: bool = False, use_task_
 
 
 def task_group_prefix_builder(task_model_id: str, task_command: str, is_first_airflow_version: bool = False) -> str:
-
-    return (
-        f"{task_model_id}_{task_command}"
-        if is_first_airflow_version
-        else f"{task_model_id}.{task_command}"
-    )
+    return f"{task_model_id}_{task_command}" if is_first_airflow_version else f"{task_model_id}.{task_command}"

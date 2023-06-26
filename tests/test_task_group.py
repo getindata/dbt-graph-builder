@@ -1,7 +1,4 @@
-from .utils import (
-    manifest_file_with_models,
-    task_group_prefix_builder,
-)
+from .utils import manifest_file_with_models, task_group_prefix_builder
 
 
 def test_task_group():

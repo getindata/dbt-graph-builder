@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Any
 
-from dbt_graph_builder.gateway import GatewayConfiguration
+from dbt_graph_builder.gateway import GatewayConfiguration, TaskGraphConfiguration
 from dbt_graph_builder.graph import DbtManifestGraph
 
 LOGGER = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ def create_tasks_graph(
     show_ephemeral_models: bool,
 ) -> DbtManifestGraph:
     LOGGER.info("Creating tasks graph")
-    dbt_airflow_graph = DbtManifestGraph(gateway_config)
+    dbt_airflow_graph = DbtManifestGraph(TaskGraphConfiguration(gateway_config))
     dbt_airflow_graph.add_execution_tasks(manifest)
     if enable_dags_dependencies:
         LOGGER.debug("Adding external dependencies")

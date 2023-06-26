@@ -1,5 +1,11 @@
-from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest, create_gateway_config
-from .utils import (manifest_file_with_models)
+from dbt_graph_builder.builder import (
+    create_gateway_config,
+    create_tasks_graph,
+    load_dbt_manifest,
+)
+from dbt_graph_builder.node_type import NodeType
+
+from .utils import manifest_file_with_models
 
 
 def test_run_test_dependency():
@@ -10,19 +16,17 @@ def test_run_test_dependency():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
+        enable_dags_dependencies=False,
         show_ephemeral_models=False,
     )
 
     # then
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model1").execution_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model1", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.upstream_task_ids
-    )
+    assert list(graph.get_graph_edges()) == []
+    assert list(graph.get_graph_nodes()) == [
+        ("model.dbt_test.model1", {"select": "model1", "depends_on": [], "node_type": NodeType.RUN_TEST})
+    ]
+    assert graph.get_graph_sinks() == ["model.dbt_test.model1"]
+    assert graph.get_graph_sources() == ["model.dbt_test.model1"]
 
 
 def test_dependency():
@@ -38,21 +42,21 @@ def test_dependency():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
+        enable_dags_dependencies=False,
         show_ephemeral_models=False,
-    ))
+    )
 
     # then
-    assert tasks.length() == 2
-
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model2").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model2", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-    )
+    assert list(graph.get_graph_edges()) == [("model.dbt_test.model1", "model.dbt_test.model2")]
+    assert list(graph.get_graph_nodes()) == [
+        ("model.dbt_test.model1", {"select": "model1", "depends_on": [], "node_type": NodeType.RUN_TEST}),
+        (
+            "model.dbt_test.model2",
+            {"select": "model2", "depends_on": ["model.dbt_test.model1"], "node_type": NodeType.RUN_TEST},
+        ),
+    ]
+    assert graph.get_graph_sinks() == ["model.dbt_test.model2"]
+    assert graph.get_graph_sources() == ["model.dbt_test.model1"]
 
 
 def test_more_complex_dependencies():
@@ -70,43 +74,41 @@ def test_more_complex_dependencies():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
+        enable_dags_dependencies=False,
         show_ephemeral_models=False,
     )
 
     # then
-    assert tasks.length() == 4
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model2").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model3").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model2", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model3", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model3").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model2", "test")
-        in tasks.get_task("model.dbt_test.model3").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model4", "run")
-        in tasks.get_task("model.dbt_test.model3").test_airflow_task.downstream_task_ids
-    )
+    assert list(graph.get_graph_edges()) == [
+        ("model.dbt_test.model1", "model.dbt_test.model2"),
+        ("model.dbt_test.model1", "model.dbt_test.model3"),
+        ("model.dbt_test.model2", "model.dbt_test.model3"),
+        ("model.dbt_test.model3", "model.dbt_test.model4"),
+    ]
+    assert list(graph.get_graph_nodes()) == [
+        ("model.dbt_test.model1", {"select": "model1", "depends_on": [], "node_type": NodeType.RUN_TEST}),
+        (
+            "model.dbt_test.model2",
+            {"select": "model2", "depends_on": ["model.dbt_test.model1"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model.dbt_test.model3",
+            {
+                "select": "model3",
+                "depends_on": ["model.dbt_test.model1", "model.dbt_test.model2"],
+                "node_type": NodeType.RUN_TEST,
+            },
+        ),
+        (
+            "model.dbt_test.model4",
+            {"select": "model4", "depends_on": ["model.dbt_test.model3"], "node_type": NodeType.RUN_TEST},
+        ),
+    ]
+    assert graph.get_graph_sinks() == ["model.dbt_test.model4"]
+    assert graph.get_graph_sources() == ["model.dbt_test.model1"]
 
 
-def test_test_dependencies():
+def test_more_complex_dependencies_2():
     # given
     manifest_path = manifest_file_with_models(
         {
@@ -122,42 +124,41 @@ def test_test_dependencies():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
+        enable_dags_dependencies=False,
         show_ephemeral_models=False,
     )
 
     # then
-    assert tasks.length() == 4
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model2").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model2", "test")
-        in tasks.get_task("model.dbt_test.model3").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model2", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model3", "run")
-        in tasks.get_task("model.dbt_test.model2").test_airflow_task.downstream_task_ids
-    )
+    assert list(graph.get_graph_edges()) == [
+        ("model.dbt_test.model1", "model.dbt_test.model2"),
+        ("model.dbt_test.model1", "model1_model2_test"),
+        ("model.dbt_test.model2", "model.dbt_test.model3"),
+        ("model.dbt_test.model2", "model1_model2_test"),
+    ]
+    assert list(graph.get_graph_nodes()) == [
+        ("model.dbt_test.model1", {"select": "model1", "depends_on": [], "node_type": NodeType.RUN_TEST}),
+        (
+            "model.dbt_test.model2",
+            {"select": "model2", "depends_on": ["model.dbt_test.model1"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model.dbt_test.model3",
+            {"select": "model3", "depends_on": ["model.dbt_test.model2"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model1_model2_test",
+            {
+                "select": "test2",
+                "depends_on": ["model.dbt_test.model1", "model.dbt_test.model2"],
+                "node_type": NodeType.MULTIPLE_DEPS_TEST,
+            },
+        ),
+    ]
+    assert graph.get_graph_sinks() == ["model.dbt_test.model3", "model1_model2_test"]
+    assert graph.get_graph_sources() == ["model.dbt_test.model1"]
 
-    assert "model1_model2_test" in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model1_model2_test").execution_airflow_task.upstream_task_ids
-    )
-    assert "model1_model2_test" in tasks.get_task("model.dbt_test.model2").test_airflow_task.downstream_task_ids
-    assert (
-        task_group_prefix_builder("model2", "test")
-        in tasks.get_task("model1_model2_test").execution_airflow_task.upstream_task_ids
-    )
 
-
-def test_complex_test_dependencies():
+def test_more_complex_dependencies_3():
     # given
     manifest_path = manifest_file_with_models(
         {
@@ -180,112 +181,94 @@ def test_complex_test_dependencies():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
+        enable_dags_dependencies=False,
         show_ephemeral_models=False,
     )
 
     # then
-    assert tasks.length() == 10
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model2").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model2", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model2", "test")
-        in tasks.get_task("model.dbt_test.model3").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model3", "run")
-        in tasks.get_task("model.dbt_test.model2").test_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model1", "test")
-        in tasks.get_task("model.dbt_test.model4").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model2", "test")
-        in tasks.get_task("model.dbt_test.model4").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model4", "run")
-        in tasks.get_task("model.dbt_test.model1").test_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model4", "run")
-        in tasks.get_task("model.dbt_test.model2").test_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model5", "test")
-        in tasks.get_task("model.dbt_test.model7").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model7", "run")
-        in tasks.get_task("model.dbt_test.model5").test_airflow_task.downstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model6", "test")
-        in tasks.get_task("model.dbt_test.model7").execution_airflow_task.upstream_task_ids
-    )
-    assert (
-        task_group_prefix_builder("model7", "run")
-        in tasks.get_task("model.dbt_test.model6").test_airflow_task.downstream_task_ids
-    )
-
-    def extract_model_arguments(args: str) -> list[str]:
-        return list(filter(lambda s: not s.startswith("-"), args.split("--select ")[1].split()))
-
-    assert "model2_model3_test" in tasks.get_task("model.dbt_test.model2").test_airflow_task.downstream_task_ids
-    assert (
-        task_group_prefix_builder("model2", "test")
-        in tasks.get_task("model2_model3_test").execution_airflow_task.upstream_task_ids
-    )
-    assert "model2_model3_test" in tasks.get_task("model.dbt_test.model3").test_airflow_task.downstream_task_ids
-    assert (
-        task_group_prefix_builder("model3", "test")
-        in tasks.get_task("model2_model3_test").execution_airflow_task.upstream_task_ids
-    )
-    assert all(
-        test_name in extract_model_arguments(tasks.get_task("model2_model3_test").execution_airflow_task.arguments[0])
-        for test_name in ["test3", "test4", "test5"]
-    )
-    assert all(
-        test_name
-        not in extract_model_arguments(tasks.get_task("model2_model3_test").execution_airflow_task.arguments[0])
-        for test_name in ["test1", "test2"]
-    )
-    assert "model2_model7_test" in tasks.get_task("model.dbt_test.model2").test_airflow_task.downstream_task_ids
-    assert (
-        task_group_prefix_builder("model2", "test")
-        in tasks.get_task("model2_model7_test").execution_airflow_task.upstream_task_ids
-    )
-    assert "model2_model7_test" in tasks.get_task("model.dbt_test.model7").test_airflow_task.downstream_task_ids
-    assert (
-        task_group_prefix_builder("model7", "test")
-        in tasks.get_task("model2_model7_test").execution_airflow_task.upstream_task_ids
-    )
-    assert "test2" in extract_model_arguments(tasks.get_task("model2_model7_test").execution_airflow_task.arguments[0])
-    assert all(
-        test_name
-        not in extract_model_arguments(tasks.get_task("model2_model7_test").execution_airflow_task.arguments[0])
-        for test_name in ["test1", "test3", "test4", "test5"]
-    )
-    assert "model5_model6_test" in tasks.get_task("model.dbt_test.model5").test_airflow_task.downstream_task_ids
-    assert (
-        task_group_prefix_builder("model5", "test")
-        in tasks.get_task("model5_model6_test").execution_airflow_task.upstream_task_ids
-    )
-    assert "model5_model6_test" in tasks.get_task("model.dbt_test.model6").test_airflow_task.downstream_task_ids
-    assert (
-        task_group_prefix_builder("model6", "test")
-        in tasks.get_task("model5_model6_test").execution_airflow_task.upstream_task_ids
-    )
-    assert "test1" in extract_model_arguments(tasks.get_task("model5_model6_test").execution_airflow_task.arguments[0])
-    assert all(
-        test_name
-        not in extract_model_arguments(tasks.get_task("model5_model6_test").execution_airflow_task.arguments[0])
-        for test_name in ["test2", "test3", "test4", "test5"]
-    )
+    assert list(graph.get_graph_edges()) == [
+        ("model.dbt_test.model1", "model.dbt_test.model2"),
+        ("model.dbt_test.model1", "model.dbt_test.model4"),
+        ("model.dbt_test.model2", "model.dbt_test.model3"),
+        ("model.dbt_test.model2", "model.dbt_test.model4"),
+        ("model.dbt_test.model2", "model2_model7_test"),
+        ("model.dbt_test.model2", "model2_model3_test"),
+        ("model.dbt_test.model3", "model2_model3_test"),
+        ("model.dbt_test.model5", "model.dbt_test.model7"),
+        ("model.dbt_test.model5", "model5_model6_test"),
+        ("model.dbt_test.model6", "model.dbt_test.model7"),
+        ("model.dbt_test.model6", "model5_model6_test"),
+        ("model.dbt_test.model7", "model2_model7_test"),
+    ]
+    assert list(graph.get_graph_nodes()) == [
+        ("model.dbt_test.model1", {"select": "model1", "depends_on": [], "node_type": NodeType.RUN_TEST}),
+        (
+            "model.dbt_test.model2",
+            {"select": "model2", "depends_on": ["model.dbt_test.model1"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model.dbt_test.model3",
+            {"select": "model3", "depends_on": ["model.dbt_test.model2"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model.dbt_test.model4",
+            {
+                "select": "model4",
+                "depends_on": ["model.dbt_test.model1", "model.dbt_test.model2"],
+                "node_type": NodeType.RUN_TEST,
+            },
+        ),
+        ("model.dbt_test.model5", {"select": "model5", "depends_on": [], "node_type": NodeType.RUN_TEST}),
+        ("model.dbt_test.model6", {"select": "model6", "depends_on": [], "node_type": NodeType.RUN_TEST}),
+        (
+            "model.dbt_test.model7",
+            {
+                "select": "model7",
+                "depends_on": ["model.dbt_test.model6", "model.dbt_test.model5"],
+                "node_type": NodeType.RUN_TEST,
+            },
+        ),
+        (
+            "model5_model6_test",
+            {
+                "select": "test1",
+                "depends_on": ["model.dbt_test.model5", "model.dbt_test.model6"],
+                "node_type": NodeType.MULTIPLE_DEPS_TEST,
+            },
+        ),
+        (
+            "model2_model7_test",
+            {
+                "select": "test2",
+                "depends_on": ["model.dbt_test.model2", "model.dbt_test.model7"],
+                "node_type": NodeType.MULTIPLE_DEPS_TEST,
+            },
+        ),
+        (
+            "model2_model3_test",
+            {
+                "select": "test3 test4 test5",
+                "depends_on": ["model.dbt_test.model2", "model.dbt_test.model3"],
+                "node_type": NodeType.MULTIPLE_DEPS_TEST,
+                "contraction": {
+                    "test.dbt_test.test4": {
+                        "select": "test4",
+                        "depends_on": ["model.dbt_test.model2", "model.dbt_test.model3"],
+                        "node_type": NodeType.MULTIPLE_DEPS_TEST,
+                    },
+                    "test.dbt_test.test5": {
+                        "select": "test5",
+                        "depends_on": ["model.dbt_test.model2", "model.dbt_test.model3"],
+                        "node_type": NodeType.MULTIPLE_DEPS_TEST,
+                    },
+                },
+            },
+        ),
+    ]
+    assert graph.get_graph_sinks() == [
+        "model.dbt_test.model4",
+        "model5_model6_test",
+        "model2_model7_test",
+        "model2_model3_test",
+    ]
+    assert graph.get_graph_sources() == ["model.dbt_test.model1", "model.dbt_test.model5", "model.dbt_test.model6"]

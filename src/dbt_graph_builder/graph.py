@@ -3,6 +3,7 @@ import logging
 from typing import Any
 
 import networkx as nx
+from networkx.classes.reportviews import NodeDataView, OutEdgeDataView
 
 from dbt_graph_builder.gateway import (
     NodeProperties,
@@ -84,7 +85,7 @@ class DbtManifestGraph:
         Args:
             include_sensors (bool, optional): If True, include sensors in the graph. Defaults to False.
         """
-        for graph_node_name, graph_node in self._get_graph_nodes():
+        for graph_node_name, graph_node in self.get_graph_nodes():
             for dependency in graph_node.get("depends_on", []):
                 if is_source_sensor_task(dependency) and not include_sensors:
                     continue
@@ -92,8 +93,21 @@ class DbtManifestGraph:
                     continue
                 self._graph.add_edge(dependency, graph_node_name)
 
-    def _get_graph_nodes(self) -> list[tuple[int, dict[str, str | list[str]]]]:
+    def get_graph_nodes(self) -> NodeDataView:
+        """Get graph nodes.
+
+        Returns:
+            NodeDataView: a view of graph nodes.
+        """
         return self._graph.nodes(data=True)
+
+    def get_graph_edges(self) -> OutEdgeDataView:
+        """Get graph edges.
+
+        Returns:
+            OutEdgeDataView: A list of graph edges.
+        """
+        return self._graph.edges()
 
     def get_graph_sources(self) -> list[str]:
         """Return a list of graph source nodes.

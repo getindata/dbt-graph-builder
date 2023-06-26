@@ -1,7 +1,10 @@
 from os import path
 
-
-from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest, create_gateway_config
+from dbt_graph_builder.builder import (
+    create_gateway_config,
+    create_tasks_graph,
+    load_dbt_manifest,
+)
 
 from .utils import (
     builder_factory,
