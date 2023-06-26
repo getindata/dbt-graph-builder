@@ -1,4 +1,5 @@
 from os import path
+
 from dbt_graph_builder.builder import (
     create_gateway_config,
     create_tasks_graph,
@@ -18,7 +19,30 @@ def test_manifest_graph():
     )
 
     # then
-    assert list(graph.get_graph_nodes()) ==  [('stg_pp_private_working_schema_dbt_test__audit_gateway', {'select': 'stg_pp_private_working_schema_dbt_test__audit_gateway', 'depends_on': [], 'node_type': NodeType.MOCK_GATEWAY}), ('model.dbt_test.dim_eatopi_users', {'select': 'dim_eatopi_users', 'depends_on': ['source.dbt_test.raw_schema.eatopi_users'], 'node_type': NodeType.RUN_TEST})]
+    assert list(graph.get_graph_nodes()) == [
+        (
+            "stg_pp_private_working_schema_dbt_test__audit_gateway",
+            {
+                "select": "stg_pp_private_working_schema_dbt_test__audit_gateway",
+                "depends_on": [],
+                "node_type": NodeType.MOCK_GATEWAY,
+            },
+        ),
+        (
+            "model.dbt_test.dim_eatopi_users",
+            {
+                "select": "dim_eatopi_users",
+                "depends_on": ["source.dbt_test.raw_schema.eatopi_users"],
+                "node_type": NodeType.RUN_TEST,
+            },
+        ),
+    ]
     assert list(graph.get_graph_edges()) == []
-    assert graph.get_graph_sinks() == ['stg_pp_private_working_schema_dbt_test__audit_gateway', 'model.dbt_test.dim_eatopi_users']
-    assert graph.get_graph_sources() == ['stg_pp_private_working_schema_dbt_test__audit_gateway', 'model.dbt_test.dim_eatopi_users']
+    assert graph.get_graph_sinks() == [
+        "stg_pp_private_working_schema_dbt_test__audit_gateway",
+        "model.dbt_test.dim_eatopi_users",
+    ]
+    assert graph.get_graph_sources() == [
+        "stg_pp_private_working_schema_dbt_test__audit_gateway",
+        "model.dbt_test.dim_eatopi_users",
+    ]
