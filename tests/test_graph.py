@@ -1,119 +1,24 @@
-from typing import Any, Dict
-
-import pytest
-
-from dbt_graph_builder.gateway import (
-    GatewayConfiguration,
-    NodeProperties,
-    SeparationLayer,
+from os import path
+from dbt_graph_builder.builder import (
+    create_gateway_config,
+    create_tasks_graph,
+    load_dbt_manifest,
 )
-from dbt_graph_builder.graph import is_gateway_valid_dependency
-
-presentation_schema_name = "presentation"
-staging_schema_name = "stg"
-gateway_config = GatewayConfiguration(
-    separation_schemas=[staging_schema_name, presentation_schema_name], gateway_task_name="gateway"
-)
+from dbt_graph_builder.node_type import NodeType
 
 
-@pytest.mark.parametrize(
-    "test_name,manifest,node,gateway_config,dependency_node_name,expected_value",
-    [
-        (
-            "when stg element with different schema connected to presentation node, return False",
-            {
-                "nodes": {
-                    "model.dim_user": {
-                        "schema": presentation_schema_name,
-                        "depends_on": {"nodes": ["model.stg_dim_user"]},
-                    },
-                    "model.stg_dim_user": {
-                        "schema": staging_schema_name,
-                        "depends_on": {"nodes": []},
-                    },
-                }
-            },
-            {"schema": presentation_schema_name, "depends_on": {"nodes": ["model.stg_dim_user"]}},
-            gateway_config,
-            "model.stg_dim_user",
-            False,
-        ),
-        (
-            "when two nodes are in the same schema (stg) should return True",
-            {
-                "nodes": {
-                    "model.dim_user": {
-                        "schema": staging_schema_name,
-                        "depends_on": {"nodes": ["model.stg_dim_user"]},
-                    },
-                    "model.stg_dim_user": {
-                        "schema": staging_schema_name,
-                        "depends_on": {"nodes": []},
-                    },
-                }
-            },
-            {"schema": staging_schema_name, "depends_on": {"nodes": ["model.stg_dim_user"]}},
-            gateway_config,
-            "model.stg_dim_user",
-            True,
-        ),
-        (
-            "when two nodes are in the same schema (presentation) should return True",
-            {
-                "nodes": {
-                    "model.dim_user": {
-                        "schema": presentation_schema_name,
-                        "depends_on": {"nodes": ["model.stg_dim_user"]},
-                    },
-                    "model.stg_dim_user": {
-                        "schema": presentation_schema_name,
-                        "depends_on": {"nodes": []},
-                    },
-                }
-            },
-            {"schema": presentation_schema_name, "depends_on": {"nodes": ["model.stg_dim_user"]}},
-            gateway_config,
-            "model.stg_dim_user",
-            True,
-        ),
-        (
-            "when node is not model type should return False",
-            {
-                "nodes": {
-                    "model.dim_user": {
-                        "schema": presentation_schema_name,
-                        "depends_on": {"nodes": ["source.stg_dim_user"]},
-                    },
-                    "source.stg_dim_user": {
-                        "schema": presentation_schema_name,
-                        "depends_on": {"nodes": []},
-                    },
-                }
-            },
-            {"schema": presentation_schema_name, "depends_on": {"nodes": ["source.stg_dim_user"]}},
-            gateway_config,
-            "source.stg_dim_user",
-            True,
-        ),
-    ],
-)
-def test_is_gateway_valid_dependency(
-    test_name: str,
-    manifest: dict,
-    node: dict[str, Any],
-    dependency_node_name: str,
-    gateway_config: GatewayConfiguration,
-    expected_value: bool,
-):
-    is_valid_dependency = is_gateway_valid_dependency(
-        dependency_node_properties=NodeProperties(
-            schema_name=manifest["nodes"][dependency_node_name]["schema"],
-            node_name=dependency_node_name,
-        ),
-        separation_layer=SeparationLayer(
-            left=gateway_config.separation_schemas[0], right=gateway_config.separation_schemas[1]
-        ),
-        node_schema=node["schema"],
+def test_manifest_graph():
+    # given
+    # when
+    graph = create_tasks_graph(
+        gateway_config=create_gateway_config({"save_points": ["stg", "pp_private_working_schema_dbt_test__audit"]}),
+        manifest=load_dbt_manifest(path.join(path.dirname(__file__), "manifests/manifest.json")),
+        enable_dags_dependencies=True,
+        show_ephemeral_models=False,
     )
 
-    assert expected_value == is_valid_dependency
+    # then
+    assert list(graph.get_graph_nodes()) ==  [('stg_pp_private_working_schema_dbt_test__audit_gateway', {'select': 'stg_pp_private_working_schema_dbt_test__audit_gateway', 'depends_on': [], 'node_type': NodeType.MOCK_GATEWAY}), ('model.dbt_test.dim_eatopi_users', {'select': 'dim_eatopi_users', 'depends_on': ['source.dbt_test.raw_schema.eatopi_users'], 'node_type': NodeType.RUN_TEST})]
+    assert list(graph.get_graph_edges()) == []
+    assert graph.get_graph_sinks() == ['stg_pp_private_working_schema_dbt_test__audit_gateway', 'model.dbt_test.dim_eatopi_users']
+    assert graph.get_graph_sources() == ['stg_pp_private_working_schema_dbt_test__audit_gateway', 'model.dbt_test.dim_eatopi_users']
