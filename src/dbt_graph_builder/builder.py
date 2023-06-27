@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, cast, NamedTuple
+from typing import Any, NamedTuple, cast
 
 from dbt_graph_builder.gateway import GatewayConfiguration, TaskGraphConfiguration
 from dbt_graph_builder.graph import DbtManifestGraph
@@ -11,6 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 class GraphConfiguration(NamedTuple):
     """Graph configuration."""
+
     enable_dags_dependencies: bool = False
     show_ephemeral_models: bool = False
 
@@ -25,8 +26,7 @@ def create_tasks_graph(
     Args:
         gateway_config (GatewayConfiguration): Gateway configuration.
         manifest (dict[str, Any]): Manifest.
-        enable_dags_dependencies (bool): If True, add external dependencies to the graph.
-        show_ephemeral_models (bool): If True, show ephemeral models in the graph.
+        graph_config (GraphConfiguration, optional): Graph configuration. Defaults to GraphConfiguration().
 
     Returns:
         DbtManifestGraph: Tasks graph.

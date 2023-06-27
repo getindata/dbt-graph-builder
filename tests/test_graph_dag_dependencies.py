@@ -1,4 +1,5 @@
 from dbt_graph_builder.builder import (
+    GraphConfiguration,
     create_gateway_config,
     create_tasks_graph,
     load_dbt_manifest,
@@ -48,8 +49,10 @@ def test_dag_sensor():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
-        show_ephemeral_models=False,
+        graph_config=GraphConfiguration(
+            enable_dags_dependencies=True,
+            show_ephemeral_models=False,
+        ),
     )
     # then
     assert graph.get_graph_sources() == ["source.upstream_pipeline_sources.upstream_pipeline.some_final_model"]
@@ -96,8 +99,10 @@ def test_dag_sensor_no_meta():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=True,
-        show_ephemeral_models=False,
+        graph_config=GraphConfiguration(
+            enable_dags_dependencies=True,
+            show_ephemeral_models=False,
+        ),
     )
 
     # then

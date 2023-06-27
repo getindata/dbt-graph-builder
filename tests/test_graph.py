@@ -1,6 +1,7 @@
 from os import path
 
 from dbt_graph_builder.builder import (
+    GraphConfiguration,
     create_gateway_config,
     create_tasks_graph,
     load_dbt_manifest,
@@ -14,8 +15,10 @@ def test_manifest_graph():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({"save_points": ["stg", "pp_private_working_schema_dbt_test__audit"]}),
         manifest=load_dbt_manifest(path.join(path.dirname(__file__), "manifests/manifest.json")),
-        enable_dags_dependencies=True,
-        show_ephemeral_models=False,
+        graph_config=GraphConfiguration(
+            enable_dags_dependencies=True,
+            show_ephemeral_models=False,
+        ),
     )
 
     # then

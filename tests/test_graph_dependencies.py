@@ -16,8 +16,6 @@ def test_run_test_dependency():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=False,
-        show_ephemeral_models=False,
     )
 
     # then
@@ -42,8 +40,6 @@ def test_dependency():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=False,
-        show_ephemeral_models=False,
     )
 
     # then
@@ -74,8 +70,6 @@ def test_more_complex_dependencies():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=False,
-        show_ephemeral_models=False,
     )
 
     # then
@@ -124,8 +118,6 @@ def test_more_complex_dependencies_2():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=False,
-        show_ephemeral_models=False,
     )
 
     # then
@@ -181,8 +173,6 @@ def test_more_complex_dependencies_3():
     graph = create_tasks_graph(
         gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
-        enable_dags_dependencies=False,
-        show_ephemeral_models=False,
     )
 
     # then
