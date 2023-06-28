@@ -12,19 +12,18 @@ LOGGER = logging.getLogger(__name__)
 class GraphConfiguration(NamedTuple):
     """Graph configuration."""
 
+    gateway_config: GatewayConfiguration = GatewayConfiguration(gateway_task_name="gateway", separation_schemas=[])
     enable_dags_dependencies: bool = False
     show_ephemeral_models: bool = False
 
 
 def create_tasks_graph(
-    gateway_config: GatewayConfiguration,
     manifest: dict[str, Any],
     graph_config: GraphConfiguration = GraphConfiguration(),
 ) -> DbtManifestGraph:
     """Create tasks graph.
 
     Args:
-        gateway_config (GatewayConfiguration): Gateway configuration.
         manifest (dict[str, Any]): Manifest.
         graph_config (GraphConfiguration, optional): Graph configuration. Defaults to GraphConfiguration().
 
@@ -32,7 +31,7 @@ def create_tasks_graph(
         DbtManifestGraph: Tasks graph.
     """
     LOGGER.info("Creating tasks graph")
-    dbt_airflow_graph = DbtManifestGraph(TaskGraphConfiguration(gateway_config))
+    dbt_airflow_graph = DbtManifestGraph(TaskGraphConfiguration(graph_config.gateway_config))
     dbt_airflow_graph.add_execution_tasks(manifest)
     if graph_config.enable_dags_dependencies:
         LOGGER.debug("Adding external dependencies")

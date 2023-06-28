@@ -1,8 +1,4 @@
-from dbt_graph_builder.builder import (
-    create_gateway_config,
-    create_tasks_graph,
-    load_dbt_manifest,
-)
+from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest
 from dbt_graph_builder.node_type import NodeType
 
 from .utils import manifest_file_with_models
@@ -13,10 +9,7 @@ def test_run_test_dependency():
     manifest_path = manifest_file_with_models({"model.dbt_test.model1": []})
 
     # when
-    graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
-        manifest=load_dbt_manifest(manifest_path),
-    )
+    graph = create_tasks_graph(manifest=load_dbt_manifest(manifest_path))
 
     # then
     assert list(graph.get_graph_edges()) == []
@@ -37,10 +30,7 @@ def test_dependency():
     )
 
     # when
-    graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
-        manifest=load_dbt_manifest(manifest_path),
-    )
+    graph = create_tasks_graph(manifest=load_dbt_manifest(manifest_path))
 
     # then
     assert list(graph.get_graph_edges()) == [("model.dbt_test.model1", "model.dbt_test.model2")]
@@ -67,10 +57,7 @@ def test_more_complex_dependencies():
     )
 
     # when
-    graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
-        manifest=load_dbt_manifest(manifest_path),
-    )
+    graph = create_tasks_graph(manifest=load_dbt_manifest(manifest_path))
 
     # then
     assert list(graph.get_graph_edges()) == [
@@ -115,10 +102,7 @@ def test_more_complex_dependencies_2():
     )
 
     # when
-    graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
-        manifest=load_dbt_manifest(manifest_path),
-    )
+    graph = create_tasks_graph(manifest=load_dbt_manifest(manifest_path))
 
     # then
     assert list(graph.get_graph_edges()) == [
@@ -170,10 +154,7 @@ def test_more_complex_dependencies_3():
     )
 
     # when
-    graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
-        manifest=load_dbt_manifest(manifest_path),
-    )
+    graph = create_tasks_graph(manifest=load_dbt_manifest(manifest_path))
 
     # then
     assert list(graph.get_graph_edges()) == [

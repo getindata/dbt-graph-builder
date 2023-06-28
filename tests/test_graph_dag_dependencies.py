@@ -1,6 +1,5 @@
 from dbt_graph_builder.builder import (
     GraphConfiguration,
-    create_gateway_config,
     create_tasks_graph,
     load_dbt_manifest,
 )
@@ -47,7 +46,6 @@ def test_dag_sensor():
     )
     # when
     graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
         graph_config=GraphConfiguration(
             enable_dags_dependencies=True,
@@ -97,7 +95,6 @@ def test_dag_sensor_no_meta():
 
     # when
     graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(manifest_path),
         graph_config=GraphConfiguration(
             enable_dags_dependencies=True,
