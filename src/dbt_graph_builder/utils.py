@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def is_task_type(node_name: str, task_type: str) -> bool:
     """Check if node name is of a certain task type.
 
