@@ -44,6 +44,7 @@ jobs:
               version[2] = '0'
           with open('VERSION', 'w') as file:
             file.write('.'.join(version))
+            file.write('\n')
           " ${{ github.event.inputs.version_part }}
           echo "::set-output name=package_version::$(pdm show --version)"
       - name: Update the CHANGELOG according to 'Keep a Changelog' guidelines
@@ -66,4 +67,4 @@ jobs:
           PULL_REQUEST_FROM_BRANCH: release/${{ steps.bump_version.outputs.package_version }}
           PULL_REQUEST_TITLE: "Release ${{ steps.bump_version.outputs.package_version }}"
           PULL_REQUEST_BODY: "Bump version and CHANGELOG for next release."
-          PULL_REQUEST_ASSIGNEES: " p-pekala"
+          PULL_REQUEST_ASSIGNEES: "p-pekala"
