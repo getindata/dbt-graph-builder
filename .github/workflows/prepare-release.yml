@@ -6,7 +6,12 @@ on:
       version_part:
         description: The part of the version to update (patch, minor or major)
         required: true
-        default: 'minor'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: minor
 
 jobs:
   prepare-release:
@@ -19,11 +24,6 @@ jobs:
       - uses: pdm-project/setup-pdm@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Validate inputs
-        run: |
-          echo "INPUT_VERSION_PART: ${{ github.event.inputs.version_part }}"
-          python -c "if '${{ github.event.inputs.version_part }}' not in ['patch', 'minor', 'major']:
-            raise ValueError(\"'${{ github.event.inputs.version_part }}' must be one of ['patch', 'minor', 'major'])\")"
       - name: Bump the version number
         id: bump_version
         run: |
