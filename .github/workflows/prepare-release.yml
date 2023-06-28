@@ -67,4 +67,3 @@ jobs:
           PULL_REQUEST_FROM_BRANCH: release/${{ steps.bump_version.outputs.package_version }}
           PULL_REQUEST_TITLE: "Release ${{ steps.bump_version.outputs.package_version }}"
           PULL_REQUEST_BODY: "Bump version and CHANGELOG for next release."
-          PULL_REQUEST_ASSIGNEES: "p-pekala"
