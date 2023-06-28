@@ -1,22 +1,22 @@
 from os import path
 
 from dbt_graph_builder.builder import (
-    create_gateway_config,
+    GraphConfiguration,
     create_tasks_graph,
     load_dbt_manifest,
 )
 from dbt_graph_builder.node_type import NodeType
-from tests.utils import task_group_prefix_builder
 
 
 def test_ephemeral_dag():
     # given
     # when
     graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(path.join(path.dirname(__file__), "manifests/manifest_ephemeral.json")),
-        enable_dags_dependencies=False,
-        show_ephemeral_models=True,
+        graph_config=GraphConfiguration(
+            enable_dags_dependencies=False,
+            show_ephemeral_models=True,
+        ),
     )
 
     # then
@@ -99,10 +99,7 @@ def test_no_ephemeral_dag():
     # given
     # when
     graph = create_tasks_graph(
-        gateway_config=create_gateway_config({}),
         manifest=load_dbt_manifest(path.join(path.dirname(__file__), "manifests/manifest_ephemeral.json")),
-        enable_dags_dependencies=False,
-        show_ephemeral_models=False,
     )
 
     # then

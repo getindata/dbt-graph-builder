@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dbt-graph-builder"
-version = "0.1.1"
 description = "DBT Graph Builder"
 authors = [
     {name = "Piotr Tutak", email = "piotr.tutak@getindata.com"},
@@ -18,11 +17,12 @@ classifiers = [
     "Programming Language :: Python :: 3.11"
 ]
 dependencies = [
-    "networkx>=2.6.3",
+    "networkx>=2.6,<3",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
 license = {file = "LICENSE"}
+dynamic = ["version"]
 
 [tool.bandit]
 exclude_dirs = ["build","dist","tests","scripts"]
@@ -74,6 +74,9 @@ markers = [
     "slow: marks tests as slow",
     "unit: fast offline tests",
 ]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
 
 [tool.pdm.dev-dependencies]
 dev = [
