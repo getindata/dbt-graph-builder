@@ -22,12 +22,29 @@ jobs:
       - name: Validate inputs
         run: |
           echo "INPUT_VERSION_PART: ${{ github.event.inputs.version_part }}"
-          python -c "if '${{ github.event.inputs.version_part }}' not in ['patch', 'minor', 'major']:   raise ValueError(\"'${{ github.event.inputs.version_part }}' must be one of ['patch', 'minor', 'major'])\")"
+          python -c "if '${{ github.event.inputs.version_part }}' not in ['patch', 'minor', 'major']:
+            raise ValueError(\"'${{ github.event.inputs.version_part }}' must be one of ['patch', 'minor', 'major'])\")"
       - name: Bump the version number
         id: bump_version
         run: |
-          pip install bump2version
-          bump2version ${{ github.event.inputs.version_part }}
+          python -c "
+          import sys
+          part = sys.argv[1]
+          with open('VERSION', 'r') as file:
+            version = file.read().strip().split('.')
+          match part:
+            case 'patch':
+              version[2] = str(int(version[2]) + 1)
+            case 'minor':
+              version[1] = str(int(version[1]) + 1)
+              version[2] = '0'
+            case 'major':
+              version[0] = str(int(version[0]) + 1)
+              version[1] = '0'
+              version[2] = '0'
+          with open('VERSION', 'w') as file:
+            file.write('.'.join(version))
+          " ${{ github.event.inputs.version_part }}
           echo "::set-output name=package_version::$(pdm show --version)"
       - name: Update the CHANGELOG according to 'Keep a Changelog' guidelines
         uses: thomaseizinger/keep-a-changelog-new-release@v1
@@ -37,8 +54,8 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git checkout -b release-${{ steps.bump_version.outputs.package_version }}
-          git push -u origin release-${{ steps.bump_version.outputs.package_version }}
+          git checkout -b release/${{ steps.bump_version.outputs.package_version }}
+          git push -u origin release/${{ steps.bump_version.outputs.package_version }}
       - name: Open a PR to merge the release to main
         id: open_pr
         uses: vsoch/pull-request-action@1.0.24
