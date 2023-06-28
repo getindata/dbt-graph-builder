@@ -61,7 +61,7 @@ jobs:
         id: open_pr
         uses: vsoch/pull-request-action@1.0.24
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CI_PERSONAL_ACCESS_TOKEN }}
           PULL_REQUEST_BRANCH: main
           PULL_REQUEST_FROM_BRANCH: release/${{ steps.bump_version.outputs.package_version }}
           PULL_REQUEST_TITLE: "Release ${{ steps.bump_version.outputs.package_version }}"
