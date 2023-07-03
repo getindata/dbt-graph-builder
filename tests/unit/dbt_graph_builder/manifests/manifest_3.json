@@ -1,0 +1,156 @@
+{
+    "nodes": {
+      "model.dbt_test.model1": {
+        "name": "model1",
+        "alias": "model1",
+        "depends_on": {
+          "nodes": [
+            "source.dbt_test.source1"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model2": {
+        "name": "model2",
+        "alias": "model2",
+        "depends_on": {
+          "nodes": [
+            "model.dbt_test.model1"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model3": {
+        "name": "model3",
+        "alias": "model3",
+        "depends_on": {
+          "nodes": [
+            "model.dbt_test.model2",
+            "model.dbt_test.model8"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model4": {
+        "name": "model4",
+        "alias": "model4",
+        "depends_on": {
+          "nodes": [
+            "model.dbt_test.model3"
+          ]
+        },
+        "config": {
+          "materialized": "view"
+        }
+      },
+      "model.dbt_test.model5": {
+        "name": "model5",
+        "alias": "model5",
+        "depends_on": {
+          "nodes": [
+            "model.dbt_test.model4",
+            "model.dbt_test.model10"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model6": {
+        "name": "model6",
+        "alias": "model6",
+        "depends_on": {
+          "nodes": [
+            "source.dbt_test.source2"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model7": {
+        "name": "model7",
+        "alias": "model7",
+        "depends_on": {
+          "nodes": [
+            "model.dbt_test.model6"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model8": {
+        "name": "model8",
+        "alias": "model8",
+        "depends_on": {
+          "nodes": [
+            "model.dbt_test.model7"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model9": {
+        "name": "model9",
+        "alias": "model9",
+        "depends_on": {
+          "nodes": [
+            "model.dbt_test.model7",
+            "model.dbt_test.model12"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model10": {
+        "name": "model10",
+        "alias": "model10",
+        "depends_on": {
+          "nodes": [
+            "model.dbt_test.model9"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model11": {
+        "name": "model11",
+        "alias": "model11",
+        "depends_on": {
+          "nodes": [
+            "source.dbt_test.source3"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      },
+      "model.dbt_test.model12": {
+        "name": "model12",
+        "alias": "model12",
+        "depends_on": {
+          "nodes": [
+            "model.dbt_test.model11"
+          ]
+        },
+        "config": {
+          "materialized": "table"
+        }
+      }
+    },
+    "sources": {
+      "source.dbt_test.source1": {},
+      "source.dbt_test.source2": {},
+      "source.dbt_test.source3": {}
+    }
+  }

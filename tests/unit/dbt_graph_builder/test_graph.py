@@ -29,6 +29,7 @@ def test_manifest_graph():
                 "select": "stg_pp_private_working_schema_dbt_test__audit_gateway",
                 "depends_on": [],
                 "node_type": NodeType.MOCK_GATEWAY,
+                "alias": "stg_pp_private_working_schema_dbt_test__audit_gateway",
             },
         ),
         (
@@ -37,6 +38,7 @@ def test_manifest_graph():
                 "select": "dim_eatopi_users",
                 "depends_on": ["source.dbt_test.raw_schema.eatopi_users"],
                 "node_type": NodeType.RUN_TEST,
+                "alias": "dim_eatopi_users",
             },
         ),
     ]
