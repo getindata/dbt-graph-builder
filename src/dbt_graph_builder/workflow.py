@@ -6,16 +6,26 @@ from typing import Any
 from .graph import DbtManifestGraph
 
 
-class Workflow(ABC):
-    """Workflow is an abstract class that defines the workflow of the graph."""
+class WorkflowFactory(ABC):
+    """WorkflowFactory is an abstract class that defines the workflow strategy of the graph."""
 
-    def __init__(self, graph: DbtManifestGraph) -> None:
+    @abstractmethod
+    def get_workflow(self) -> Step:
+        """Get the workflow out of a graph."""
+
+
+class SimpleWorkflowFactory(WorkflowFactory):
+    """SimpleWorkflowStrategy is a simple workflow strategy that creates a chain of steps."""
+
+    def __init__(self, graph: DbtManifestGraph, step_factory: StepFactory) -> None:
         """Create a new workflow.
 
         Args:
             graph (DbtManifestGraph): The graph to process.
+            step_factory (StepFactory): The step factory to use.
         """
         self._graph = graph
+        self._factory = step_factory
         self._init()
 
     def _init(self) -> None:
@@ -37,14 +47,14 @@ class Workflow(ABC):
         self._nodes_to_process = set(self._graph.get_graph_sources())
         chain_step = None
         while len(self._nodes_to_process) > 0:
-            parallel_step = self.get_parallel_step()
+            parallel_step = self._factory.get_parallel_step()
             for source_node in sorted(self._nodes_to_process):
-                step = self.process_node(source_node)
+                step = self._process_node(source_node)
                 parallel_step.add_step(step)
             simplified_step = parallel_step.simplify()
             if simplified_step is not None:
                 if chain_step is None:
-                    chain_step = self.get_chain_step(simplified_step)
+                    chain_step = self._factory.get_chain_step(simplified_step)
                 else:
                     chain_step.add_step(simplified_step)
             self._processed_nodes.update(self._processed_nodes_this_iteration)
@@ -62,7 +72,7 @@ class Workflow(ABC):
             raise ValueError("No steps were created")
         return chain_step
 
-    def process_node(
+    def _process_node(
         self,
         node: str,
     ) -> Step | None:
@@ -87,23 +97,27 @@ class Workflow(ABC):
         return in_degree
 
     def _get_step(self, node: str) -> Step:
-        step = self.get_single_step(node, self._graph.graph.nodes[node])
+        step = self._factory.get_single_step(node, self._graph.graph.nodes[node])
         self._processed_nodes_this_iteration[node] = step
         if self._graph.graph.out_degree(node) == 0:
             return step
-        step = self.get_chain_step(step)
+        step = self._factory.get_chain_step(step)
         self._processed_nodes_this_iteration[node] = step
         if self._graph.graph.out_degree(node) == 1:
-            next_step = self.process_node(next(self._graph.graph.successors(node)))
+            next_step = self._process_node(next(self._graph.graph.successors(node)))
             step.add_step(next_step)
             return step
-        parallel_step = self.get_parallel_step()
+        parallel_step = self._factory.get_parallel_step()
         for next_node in self._graph.graph.successors(node):
-            next_step = self.process_node(next_node)
+            next_step = self._process_node(next_node)
             parallel_step.add_step(next_step)
         simplified_parallel_step = parallel_step.simplify()
         step.add_step(simplified_parallel_step)
         return step
+
+
+class StepFactory(ABC):
+    """StepFactory is an abstract class that defines the step creation strategy of the graph."""
 
     @abstractmethod
     def get_single_step(self, node: str, node_data: dict[str, Any]) -> Step:
