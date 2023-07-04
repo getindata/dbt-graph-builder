@@ -4,7 +4,7 @@ from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest
 from dbt_graph_builder.workflow import (
     ChainStep,
     ParallelStep,
-    SimpleWorkflowFactory,
+    SequentialStepsGraphFactory,
     Step,
     StepFactory,
 )
@@ -31,13 +31,13 @@ class MyStep(Step):
 
 
 class MyWorkflow(StepFactory):
-    def get_single_step(self, node: str, node_data: dict[str, Any]) -> Step:
+    def create_single_step(self, node: str, node_data: dict[str, Any]) -> Step:
         return MyStep(node)
 
-    def get_chain_step(self, step: Step) -> ChainStep:
+    def create_chain_step(self, step: Step) -> ChainStep:
         return MyChainStep(step)
 
-    def get_parallel_step(self) -> ParallelStep:
+    def create_parallel_step(self) -> ParallelStep:
         return MyParallelStep([])
 
 
@@ -80,7 +80,7 @@ def test_workflow_1():
     ]
 
     factory = MyWorkflow()
-    steps = SimpleWorkflowFactory(manifest_graph, factory).get_workflow()
+    steps = SequentialStepsGraphFactory(manifest_graph, factory).get_workflow()
     assert steps.get_step() == (
         [
             ({"name": "model.dbt_test.model1"}, {"name": "model.dbt_test.model2"}, None),
@@ -122,7 +122,7 @@ def test_workflow_2():
         ("model.dbt_test.model12", "model.dbt_test.model9"),
     ]
     factory = MyWorkflow()
-    steps = SimpleWorkflowFactory(manifest_graph, factory).get_workflow()
+    steps = SequentialStepsGraphFactory(manifest_graph, factory).get_workflow()
     assert steps.get_step() == (
         [
             ({"name": "model.dbt_test.model1"}, {"name": "model.dbt_test.model2"}, None),
