@@ -7,7 +7,14 @@ from .graph import DbtManifestGraph
 
 
 class SequentialStepsGraphFactory(ABC):
-    """SequentialStepsGraphFactory is a simple workflow strategy that creates a chain of steps."""
+    """SequentialStepsGraphFactory is a simple workflow strategy that creates a chain of steps.
+
+    The steps are created in the order of the graph sources. Each step is created from a single node.
+    If a node has multiple successors, a parallel step is created for them. If a node has multiple predecessors,
+    a chain step is created for them.
+
+    The steps are created using a StepFactory.
+    """
 
     def __init__(self, graph: DbtManifestGraph, step_factory: StepFactory) -> None:
         """Create a new SequentialStepsGraphFactory.
