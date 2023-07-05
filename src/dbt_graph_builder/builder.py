@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, NamedTuple, cast
+from typing import Any, NamedTuple
 
 from dbt_graph_builder.gateway import GatewayConfiguration, TaskGraphConfiguration
 from dbt_graph_builder.graph import DbtManifestGraph
@@ -59,7 +59,7 @@ def load_dbt_manifest(manifest_path: os.PathLike[str] | str) -> dict[str, Any]:
     LOGGER.info("Loading dbt manifest")
     with open(manifest_path) as file:
         manifest_content = json.load(file)
-        return cast(dict[str, Any], manifest_content)
+        return manifest_content  # type: ignore
 
 
 def create_gateway_config(airflow_config: dict[str, Any]) -> GatewayConfiguration:
