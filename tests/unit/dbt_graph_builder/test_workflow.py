@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Any
 
 from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest

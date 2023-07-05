@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from os import path
 
 from dbt_graph_builder.builder import (

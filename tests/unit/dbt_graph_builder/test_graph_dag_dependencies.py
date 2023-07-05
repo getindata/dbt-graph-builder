@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dbt_graph_builder.builder import (
     GraphConfiguration,
     create_tasks_graph,
