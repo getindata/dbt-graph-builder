@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from dbt_graph_builder.builder import create_tasks_graph, load_dbt_manifest
 from dbt_graph_builder.node_type import NodeType
 
