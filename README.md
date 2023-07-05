@@ -3,25 +3,28 @@
 [![Python Version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)](https://github.com/getindata/dbt-graph-builder)
 [![PyPI Version](https://badge.fury.io/py/dbt-graph-builder.svg)](https://pypi.org/project/dbt-graph-builder/)
 [![Downloads](https://pepy.tech/badge/dbt-graph-builder)](https://pepy.tech/project/dbt-graph-builder)
+
+## Overview
+This library provides a set of tools for building a graph of dbt models and their dependencies. It can be used to create an Airflow DAG for dbt models
+or to create a graph of dbt models and their dependencies in a format that can be used by other tools like GCP Workflows.
+
 ## Project Organization
 
 - .devcontainer - This directory contains required files for creating a [Codespace](https://github.com/features/codespaces).
 - .github
   - workflows - Contains GitHub Actions used for building, testing and publishing.
-    - publish-test.yml - Publish wheels to [https://test.pypi.org/](https://test.pypi.org/)
+    - prepare-release.yml - Contains steps to prepare a release.
     - publish.yml - Publish wheels to [https://pypi.org/](https://pypi.org/)
-    - pull-request.yml - Build and Test pull requests before commiting to main.
+    - test-linting.yml - Build and Test pull requests before commiting to main.
     - template-sync.yml - Update GitHub Repo with enhancments to base template
 - docs - collect documents (default format .md)
 - src - place new source code here
   - python_package - sample package (this can be deleted when creating a new repository)
 - tests - contains Python based test cases to validation src code
 - .pre-commit-config.yaml - Contains various pre-check fixes for Python
-- .templateversionrc - used to track template version usage.
 - MANIFEST.in - Declares additional files to include in Python whl
 - pyproject.toml - Python Project Declaration
-- ws.code-workspace - Recommended configurations for [Visual Studio Code](https://code.visualstudio.com/)
-
+- README.md - This file
 
 ## Contributing
 

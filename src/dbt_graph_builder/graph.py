@@ -38,6 +38,15 @@ class DbtManifestGraph:
         self._graph = nx.DiGraph()
         self._configuration = configuration
 
+    @property
+    def graph(self) -> nx.DiGraph:
+        """Get graph.
+
+        Returns:
+            nx.DiGraph: Graph.
+        """
+        return self._graph
+
     def add_execution_tasks(self, manifest: dict[str, Any]) -> None:
         """Add execution tasks.
 
@@ -58,7 +67,7 @@ class DbtManifestGraph:
                 self._add_graph_node_for_multiple_deps_test(node_name, manifest_node, manifest)
 
     def _add_gateway_execution_tasks(self, manifest: dict[str, Any]) -> None:
-        if self._configuration.gateway.separation_schemas.__len__() >= 2:
+        if len(self._configuration.gateway.separation_schemas) >= 2:
             separation_layers = self._configuration.gateway.separation_schemas
 
             for index, _ in enumerate(separation_layers[:-1]):
@@ -147,6 +156,21 @@ class DbtManifestGraph:
         for depends_on_tuple, test_node_names in tests_with_more_deps.items():
             self._contract_test_nodes_same_deps(depends_on_tuple, test_node_names)
 
+    @staticmethod
+    def get_default_node_values(manifest_node: dict[str, Any]) -> dict[str, Any]:
+        """Get default node values.
+
+        Args:
+            manifest_node (dict): Manifest node.
+
+        Returns:
+            dict: Default node values.
+        """
+        result: dict[str, Any] = {}
+        if "alias" in manifest_node:
+            result["alias"] = manifest_node["alias"]
+        return result
+
     def _add_execution_graph_node(
         self, node_name: str, manifest_node: dict[str, Any], node_type: NodeType, manifest: dict[str, Any]
     ) -> None:
@@ -155,6 +179,7 @@ class DbtManifestGraph:
             select=manifest_node["name"],
             depends_on=self._get_model_dependencies_from_manifest_node(manifest_node, manifest),
             node_type=node_type,
+            **self.get_default_node_values(manifest_node),
         )
 
     def _add_sensor_source_node(self, node_name: str, manifest_node: dict[str, Any]) -> None:
@@ -163,6 +188,7 @@ class DbtManifestGraph:
             select=manifest_node["name"],
             dag=manifest_node["source_meta"]["dag"],
             node_type=NodeType.SOURCE_SENSOR,
+            **self.get_default_node_values(manifest_node),
         )
 
     def _add_gateway_node(self, manifest: dict[str, Any], separation_layer: SeparationLayer) -> None:
@@ -175,6 +201,7 @@ class DbtManifestGraph:
             select=node_name,
             depends_on=get_gateway_dependencies(separation_layer=separation_layer, manifest=manifest),
             node_type=NodeType.MOCK_GATEWAY,
+            **self.get_default_node_values({"alias": node_name}),
         )
 
     def _add_graph_node_for_model_run_task(
