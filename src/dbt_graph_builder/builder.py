@@ -3,37 +3,31 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, NamedTuple
+from typing import Any
 
-from dbt_graph_builder.gateway import GatewayConfiguration, TaskGraphConfiguration
-from dbt_graph_builder.graph import DbtManifestGraph
+from dbt_graph_builder.gateway import GatewayConfiguration
+from dbt_graph_builder.graph import DbtManifestGraph, GraphConfiguration
 
 LOGGER = logging.getLogger(__name__)
 
 
-class GraphConfiguration(NamedTuple):
-    """Graph configuration."""
-
-    gateway_config: GatewayConfiguration = GatewayConfiguration(gateway_task_name="gateway", separation_schemas=[])
-    enable_dags_dependencies: bool = False
-    show_ephemeral_models: bool = False
-
-
 def create_tasks_graph(
     manifest: dict[str, Any],
-    graph_config: GraphConfiguration = GraphConfiguration(),
+    graph_config: GraphConfiguration | None = None,
 ) -> DbtManifestGraph:
     """Create tasks graph.
 
     Args:
         manifest (dict[str, Any]): Manifest.
-        graph_config (GraphConfiguration, optional): Graph configuration. Defaults to GraphConfiguration().
+        graph_config (GraphConfiguration, optional): Graph configuration. Defaults to None.
 
     Returns:
         DbtManifestGraph: Tasks graph.
     """
+    if graph_config is None:
+        graph_config = GraphConfiguration()
     LOGGER.info("Creating tasks graph")
-    dbt_airflow_graph = DbtManifestGraph(TaskGraphConfiguration(graph_config.gateway_config))
+    dbt_airflow_graph = DbtManifestGraph(graph_config)
     dbt_airflow_graph.add_execution_tasks(manifest)
     if graph_config.enable_dags_dependencies:
         LOGGER.debug("Adding external dependencies")
@@ -72,7 +66,11 @@ def create_gateway_config(airflow_config: dict[str, Any]) -> GatewayConfiguratio
         GatewayConfiguration: Gateway configuration.
     """
     LOGGER.info("Creating gateway config")
+    if "save_points" in airflow_config:
+        separation_schemas = airflow_config["save_points"]
+    else:
+        separation_schemas = []
     return GatewayConfiguration(
-        separation_schemas=airflow_config.get("save_points", []),
+        separation_schemas=separation_schemas,
         gateway_task_name="gateway",
     )

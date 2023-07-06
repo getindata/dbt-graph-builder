@@ -16,6 +16,7 @@ def test_manifest_graph():
         manifest=load_dbt_manifest(path.join(path.dirname(__file__), "manifests/manifest.json")),
         graph_config=GraphConfiguration(
             gateway_config=create_gateway_config({"save_points": ["stg", "pp_private_working_schema_dbt_test__audit"]}),
+            dbt_manifest_props={"alias": "alias"},
             enable_dags_dependencies=True,
             show_ephemeral_models=False,
         ),
