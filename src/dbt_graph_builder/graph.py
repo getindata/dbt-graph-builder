@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import itertools
 import logging
+from dataclasses import dataclass, field
 from typing import Any
 
 import networkx as nx
 from networkx.classes.reportviews import NodeDataView, OutEdgeDataView
 
 from dbt_graph_builder.gateway import (
+    GatewayConfiguration,
     NodeProperties,
     SeparationLayer,
-    TaskGraphConfiguration,
     add_gateway_to_dependencies,
     create_gateway_name,
     get_gateway_dependencies,
@@ -26,14 +27,28 @@ from dbt_graph_builder.utils import (
 )
 
 
+def _default_gateway_config() -> GatewayConfiguration:
+    return GatewayConfiguration([], "gateway")
+
+
+@dataclass(frozen=True)
+class GraphConfiguration:
+    """Graph configuration."""
+
+    gateway_config: GatewayConfiguration = field(default_factory=_default_gateway_config)
+    dbt_manifest_props: dict[str, str] = field(default_factory=dict)
+    enable_dags_dependencies: bool = False
+    show_ephemeral_models: bool = False
+
+
 class DbtManifestGraph:
     """DbtManifestGraph class is used to create a DAG from DBT manifest.json file."""
 
-    def __init__(self, configuration: TaskGraphConfiguration) -> None:
+    def __init__(self, configuration: GraphConfiguration) -> None:
         """Create DbtManifestGraph.
 
         Args:
-            configuration (TaskGraphConfiguration): _description_
+            configuration (GraphConfiguration): Graph configuration.
         """
         self._graph = nx.DiGraph()
         self._configuration = configuration
@@ -67,8 +82,8 @@ class DbtManifestGraph:
                 self._add_graph_node_for_multiple_deps_test(node_name, manifest_node, manifest)
 
     def _add_gateway_execution_tasks(self, manifest: dict[str, Any]) -> None:
-        if len(self._configuration.gateway.separation_schemas) >= 2:
-            separation_layers = self._configuration.gateway.separation_schemas
+        if len(self._configuration.gateway_config.separation_schemas) >= 2:
+            separation_layers = self._configuration.gateway_config.separation_schemas
 
             for index, _ in enumerate(separation_layers[:-1]):
                 separation_layer_left = separation_layers[index]
@@ -156,8 +171,7 @@ class DbtManifestGraph:
         for depends_on_tuple, test_node_names in tests_with_more_deps.items():
             self._contract_test_nodes_same_deps(depends_on_tuple, test_node_names)
 
-    @staticmethod
-    def get_default_node_values(manifest_node: dict[str, Any]) -> dict[str, Any]:
+    def get_default_node_values(self, manifest_node: dict[str, Any]) -> dict[str, Any]:
         """Get default node values.
 
         Args:
@@ -167,8 +181,9 @@ class DbtManifestGraph:
             dict: Default node values.
         """
         result: dict[str, Any] = {}
-        if "alias" in manifest_node:
-            result["alias"] = manifest_node["alias"]
+        for key, value in self._configuration.dbt_manifest_props.items():
+            if key in manifest_node:
+                result[value] = manifest_node[key]
         return result
 
     def _add_execution_graph_node(
@@ -194,7 +209,7 @@ class DbtManifestGraph:
     def _add_gateway_node(self, manifest: dict[str, Any], separation_layer: SeparationLayer) -> None:
         node_name = create_gateway_name(
             separation_layer=separation_layer,
-            gateway_task_name=self._configuration.gateway.gateway_task_name,
+            gateway_task_name=self._configuration.gateway_config.gateway_task_name,
         )
         self._graph.add_node(
             node_name,
@@ -260,9 +275,9 @@ class DbtManifestGraph:
 
         if should_gateway_be_added(
             node_schema=node_schema,
-            separation_schemas=self._configuration.gateway.separation_schemas,
+            separation_schemas=self._configuration.gateway_config.separation_schemas,
         ):
-            node_schema_index = self._configuration.gateway.separation_schemas.index(node_schema)
+            node_schema_index = self._configuration.gateway_config.separation_schemas.index(node_schema)
             if node_schema_index >= 1:
                 filtered_records = self._filter_to_gateway_conditions(
                     node_schema_index=node_schema_index,
@@ -280,7 +295,7 @@ class DbtManifestGraph:
         node: dict[str, Any],
         filtered_records: list[str],
     ) -> list[str]:
-        separation_layers = self._configuration.gateway.separation_schemas
+        separation_layers = self._configuration.gateway_config.separation_schemas
         separation_layer_left = separation_layers[node_schema_index - 1]
         separation_layer_right = separation_layers[node_schema_index]
 
@@ -300,7 +315,7 @@ class DbtManifestGraph:
             filtered_records=filtered_records,
             gateway_name=create_gateway_name(
                 separation_layer=SeparationLayer(left=separation_layer_left, right=separation_layer_right),
-                gateway_task_name=self._configuration.gateway.gateway_task_name,
+                gateway_task_name=self._configuration.gateway_config.gateway_task_name,
             ),
         )
         return filtered_dependencies

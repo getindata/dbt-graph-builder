@@ -96,7 +96,7 @@ class SequentialStepsGraphFactory(ABC):
         return in_degree
 
     def _get_step(self, node: str) -> Step:
-        step = self._factory.create_single_step(node, self._graph.graph.nodes[node])
+        step = self._factory.create_node_step(node, self._graph.graph.nodes[node])
         self._processed_nodes_this_iteration[node] = step
         if self._graph.graph.out_degree(node) == 0:
             return step
@@ -119,7 +119,7 @@ class StepFactory(ABC):
     """StepFactory is an abstract class that defines the step creation strategy of the graph."""
 
     @abstractmethod
-    def create_single_step(self, node: str, node_data: dict[str, Any]) -> Step:
+    def create_node_step(self, node: str, node_data: dict[str, Any]) -> Step:
         """Return a single step materialization.
 
         Args:
