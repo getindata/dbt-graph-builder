@@ -6,6 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "dbt-graph-builder"
 description = "DBT Graph Builder"
 authors = [
+    {name = "Piotr Pękala", email = "piotr.pekala@getindata.com"},
+    {name = "Andrzej Swatowski", email = "andrzej.swatowski@getindata.com"},
     {name = "Piotr Tutak", email = "piotr.tutak@getindata.com"},
 ]
 classifiers = [
