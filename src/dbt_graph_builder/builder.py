@@ -38,6 +38,8 @@ def create_tasks_graph(
         dbt_airflow_graph.remove_ephemeral_nodes_from_graph()
     LOGGER.debug("Contracting test nodes")
     dbt_airflow_graph.contract_test_nodes()
+    LOGGER.debug("Creating multple deps tests dependencies")
+    dbt_airflow_graph.create_multiple_deps_test_dependencies(graph_config.check_all_deps_for_multiple_deps_tests)
     return dbt_airflow_graph
 
 
