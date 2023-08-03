@@ -167,7 +167,12 @@ class DbtManifestGraph:
             self._graph.remove_node(node_name)
 
     def create_multiple_deps_test_dependencies(self, check_all_predecessors: bool) -> None:
-        """Create edges from dependencies to multiple deps test."""
+        """Create edges from dependencies to multiple deps test.
+
+        Args:
+            check_all_predecessors (bool): If True, check all predecessors when creating dependencies.
+                Defaults to False.
+        """
         for test_node_name, node in self._graph.nodes(data=True):
             if node["node_type"] != NodeType.MULTIPLE_DEPS_TEST:
                 continue
@@ -176,7 +181,6 @@ class DbtManifestGraph:
                     node_name, test_node_name, check_all_predecessors=check_all_predecessors
                 ):
                     self._graph.add_edge(test_node_name, node_name)
-
 
     def _get_all_node_predecessors(self, node_name: str) -> set[str]:
         predecessors = set(self._graph.predecessors(node_name))
