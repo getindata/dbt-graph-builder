@@ -146,6 +146,7 @@ def test_more_complex_dependencies_3():
             "model.dbt_test.model5": [],
             "model.dbt_test.model6": [],
             "model.dbt_test.model7": ["model.dbt_test.model6", "model.dbt_test.model5"],
+            "model.dbt_test.model8": ["model.dbt_test.model7", "model.dbt_test.model6", "model.dbt_test.model5"],
             "test.dbt_test.test1": ["model.dbt_test.model6", "model.dbt_test.model5"],
             "test.dbt_test.test2": ["model.dbt_test.model7", "model.dbt_test.model2"],
             "test.dbt_test.test3": ["model.dbt_test.model2", "model.dbt_test.model3"],
@@ -167,9 +168,12 @@ def test_more_complex_dependencies_3():
         ("model.dbt_test.model2", "model2_model3_test"),
         ("model.dbt_test.model3", "model2_model3_test"),
         ("model.dbt_test.model5", "model.dbt_test.model7"),
+        ("model.dbt_test.model5", "model.dbt_test.model8"),
         ("model.dbt_test.model5", "model5_model6_test"),
         ("model.dbt_test.model6", "model.dbt_test.model7"),
+        ("model.dbt_test.model6", "model.dbt_test.model8"),
         ("model.dbt_test.model6", "model5_model6_test"),
+        ("model.dbt_test.model7", "model.dbt_test.model8"),
         ("model.dbt_test.model7", "model2_model7_test"),
         ("model5_model6_test", "model.dbt_test.model7"),
     ]
@@ -199,6 +203,14 @@ def test_more_complex_dependencies_3():
                 "select": "model7",
                 "depends_on": ["model.dbt_test.model6", "model.dbt_test.model5"],
                 "node_type": NodeType.RUN_TEST,
+            },
+        ),
+        (
+            "model.dbt_test.model8",
+            {
+                "depends_on": ["model.dbt_test.model7", "model.dbt_test.model6", "model.dbt_test.model5"],
+                "node_type": NodeType.RUN_TEST,
+                "select": "model8",
             },
         ),
         (
@@ -240,6 +252,7 @@ def test_more_complex_dependencies_3():
     ]
     assert graph.get_graph_sinks() == [
         "model.dbt_test.model4",
+        "model.dbt_test.model8",
         "model2_model7_test",
         "model2_model3_test",
     ]

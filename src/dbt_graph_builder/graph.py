@@ -200,10 +200,12 @@ class DbtManifestGraph:
         test_deps: set[str] = set(test_node["depends_on"])
         if node_name in test_deps:
             return False
-        if test_deps.issubset(set(node["depends_on"])):
-            return True
         if not check_all_predecessors:
-            return False
+            if not test_deps.issubset(set(node["depends_on"])):
+                return False
+            if test_node_name in self._get_all_node_predecessors(node_name):
+                return False
+            return True
         predecessors = self._get_all_node_predecessors(node_name)
         if not test_deps.issubset(predecessors):
             return False
