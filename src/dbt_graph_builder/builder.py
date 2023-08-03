@@ -32,14 +32,14 @@ def create_tasks_graph(
     if graph_config.enable_dags_dependencies:
         LOGGER.debug("Adding external dependencies")
         dbt_airflow_graph.add_external_dependencies(manifest)
-    dbt_airflow_graph.create_edges_from_dependencies(graph_config.enable_dags_dependencies)
+    dbt_airflow_graph.create_edges_from_dependencies()
     if not graph_config.show_ephemeral_models:
         LOGGER.debug("Removing ephemeral nodes from graph")
         dbt_airflow_graph.remove_ephemeral_nodes_from_graph()
     LOGGER.debug("Contracting test nodes")
     dbt_airflow_graph.contract_test_nodes()
     LOGGER.debug("Creating multple deps tests dependencies")
-    dbt_airflow_graph.create_multiple_deps_test_dependencies(graph_config.check_all_deps_for_multiple_deps_tests)
+    dbt_airflow_graph.create_multiple_deps_test_dependencies()
     return dbt_airflow_graph
 
 

@@ -106,15 +106,11 @@ class DbtManifestGraph:
                 logging.info("Creating source sensor for: " + source_name)
                 self._add_sensor_source_node(source_name, manifest_source)
 
-    def create_edges_from_dependencies(self, include_sensors: bool = False) -> None:
-        """Create edges from dependencies.
-
-        Args:
-            include_sensors (bool, optional): If True, include sensors in the graph. Defaults to False.
-        """
+    def create_edges_from_dependencies(self) -> None:
+        """Create edges from dependencies."""
         for graph_node_name, graph_node in self.get_graph_nodes():
             for dependency in graph_node.get("depends_on", []):
-                if is_source_sensor_task(dependency) and not include_sensors:
+                if is_source_sensor_task(dependency) and not self._configuration.enable_dags_dependencies:
                     continue
                 if not self._graph.has_node(dependency):
                     continue
@@ -166,19 +162,15 @@ class DbtManifestGraph:
             )
             self._graph.remove_node(node_name)
 
-    def create_multiple_deps_test_dependencies(self, check_all_predecessors: bool) -> None:
-        """Create edges from dependencies to multiple deps test.
-
-        Args:
-            check_all_predecessors (bool): If True, check all predecessors when creating dependencies.
-                Defaults to False.
-        """
+    def create_multiple_deps_test_dependencies(self) -> None:
+        """Create edges from dependencies to multiple deps test."""
         for test_node_name, node in self._graph.nodes(data=True):
             if node["node_type"] != NodeType.MULTIPLE_DEPS_TEST:
                 continue
             for node_name in self._graph.nodes():
                 if self._check_if_node_predecessors_are_superset_of_test_deps(
-                    node_name, test_node_name, check_all_predecessors=check_all_predecessors
+                    node_name,
+                    test_node_name,
                 ):
                     self._graph.add_edge(test_node_name, node_name)
 
@@ -190,9 +182,7 @@ class DbtManifestGraph:
             predecessors |= self._get_all_node_predecessors(predecessor)
         return predecessors
 
-    def _check_if_node_predecessors_are_superset_of_test_deps(
-        self, node_name: str, test_node_name: str, check_all_predecessors: bool
-    ) -> bool:
+    def _check_if_node_predecessors_are_superset_of_test_deps(self, node_name: str, test_node_name: str) -> bool:
         node = self._graph.nodes[node_name]
         test_node = self._graph.nodes[test_node_name]
         if node["node_type"] != NodeType.RUN_TEST:
@@ -200,7 +190,7 @@ class DbtManifestGraph:
         test_deps: set[str] = set(test_node["depends_on"])
         if node_name in test_deps:
             return False
-        if not check_all_predecessors:
+        if not self._configuration.check_all_deps_for_multiple_deps_tests:
             if not test_deps.issubset(set(node["depends_on"])):
                 return False
             if test_node_name in self._get_all_node_predecessors(node_name):
