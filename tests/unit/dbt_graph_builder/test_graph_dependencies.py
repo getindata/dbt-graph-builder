@@ -245,7 +245,6 @@ def test_more_complex_dependencies_3():
     assert graph.get_graph_sources() == ["model.dbt_test.model1", "model.dbt_test.model5", "model.dbt_test.model6"]
 
 
-
 def test_more_complex_dependencies_4():
     # given
     manifest_path = manifest_file_with_models(
