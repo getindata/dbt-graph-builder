@@ -183,8 +183,10 @@ class DbtManifestGraph:
                     self._graph.add_edge(test_node_name, node_name)
 
     def _get_all_node_predecessors(self, node_name: str) -> set[str]:
-        predecessors = set(self._graph.predecessors(node_name))
-        for predecessor in predecessors:
+        predecessors: set[str] = set()
+        node_predecessors = set(self._graph.predecessors(node_name))
+        predecessors |= node_predecessors
+        for predecessor in node_predecessors:
             predecessors |= self._get_all_node_predecessors(predecessor)
         return predecessors
 
