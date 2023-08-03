@@ -286,8 +286,7 @@ class DbtManifestGraph:
         for node_name, node in self._graph.nodes(data=True):
             if node["node_type"] != NodeType.MULTIPLE_DEPS_TEST:
                 continue
-            model_dependencies: list[str] = node["depends_on"]
-            model_dependencies.sort()
+            model_dependencies: list[str] = sorted(node["depends_on"])
             test_key = tuple(model_dependencies)
             if test_key not in tests_with_more_deps:
                 tests_with_more_deps[test_key] = []
