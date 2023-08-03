@@ -170,6 +170,7 @@ def test_more_complex_dependencies_3():
         ("model.dbt_test.model6", "model.dbt_test.model7"),
         ("model.dbt_test.model6", "model5_model6_test"),
         ("model.dbt_test.model7", "model2_model7_test"),
+        ("model5_model6_test", "model.dbt_test.model7"),
     ]
     assert list(graph.get_graph_nodes()) == [
         ("model.dbt_test.model1", {"select": "model1", "depends_on": [], "node_type": NodeType.RUN_TEST}),
