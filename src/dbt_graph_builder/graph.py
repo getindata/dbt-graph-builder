@@ -170,12 +170,12 @@ class DbtManifestGraph:
             node_set_deps: set[str] = set()
             all_node_successors: set[str] = set()
             for node_name in self._graph.nodes():
+                if node_name in all_node_successors:
+                    continue
                 if not self._check_if_node_predecessors_are_superset_of_test_deps(
                     node_name,
                     test_node_name,
                 ):
-                    continue
-                if node_name in all_node_successors:
                     continue
                 node_set_deps.add(node_name)
                 all_node_successors |= self._get_all_node_successors(node_name)
