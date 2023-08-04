@@ -167,20 +167,46 @@ class DbtManifestGraph:
         for test_node_name, node in self._graph.nodes(data=True):
             if node["node_type"] != NodeType.MULTIPLE_DEPS_TEST:
                 continue
+            node_set_deps: set[str] = set()
+            all_node_successors: set[str] = set()
             for node_name in self._graph.nodes():
-                if self._check_if_node_predecessors_are_superset_of_test_deps(
+                if not self._check_if_node_predecessors_are_superset_of_test_deps(
                     node_name,
                     test_node_name,
                 ):
-                    self._graph.add_edge(test_node_name, node_name)
+                    continue
+                if node_name in all_node_successors:
+                    continue
+                node_set_deps.add(node_name)
+                all_node_successors |= self._get_all_node_successors(node_name)
+            for node_name in node_set_deps - all_node_successors:
+                self._graph.add_edge(test_node_name, node_name)
 
     def _get_all_node_predecessors(self, node_name: str) -> set[str]:
-        predecessors: set[str] = set()
-        node_predecessors = set(self._graph.predecessors(node_name))
-        predecessors |= node_predecessors
-        for predecessor in node_predecessors:
-            predecessors |= self._get_all_node_predecessors(predecessor)
-        return predecessors
+        all_predecessors: set[str] = set()
+        to_process: list[str] = [node_name]
+        while len(to_process) > 0:
+            node = to_process.pop(0)
+            node_predecessors = set(self._graph.predecessors(node))
+            for node in node_predecessors:
+                if node in all_predecessors:
+                    continue
+                to_process.append(node)
+            all_predecessors |= node_predecessors
+        return all_predecessors
+
+    def _get_all_node_successors(self, node_name: str) -> set[str]:
+        all_successors: set[str] = set()
+        to_process: list[str] = [node_name]
+        while len(to_process) > 0:
+            node = to_process.pop(0)
+            node_successors = set(self._graph.successors(node))
+            for node in node_successors:
+                if node in all_successors:
+                    continue
+                to_process.append(node)
+            all_successors |= node_successors
+        return all_successors
 
     def _check_if_node_predecessors_are_superset_of_test_deps(self, node_name: str, test_node_name: str) -> bool:
         node = self._graph.nodes[node_name]
@@ -193,13 +219,9 @@ class DbtManifestGraph:
         if not self._configuration.check_all_deps_for_multiple_deps_tests:
             if not test_deps.issubset(set(node["depends_on"])):
                 return False
-            if test_node_name in self._get_all_node_predecessors(node_name):
-                return False
             return True
         predecessors = self._get_all_node_predecessors(node_name)
         if not test_deps.issubset(predecessors):
-            return False
-        if test_node_name in predecessors:
             return False
         return True
 
