@@ -386,3 +386,58 @@ def test_more_complex_dependencies_4():
     ]
     assert graph.get_graph_sinks() == ["model.dbt_test.model8", "model.dbt_test.model9"]
     assert graph.get_graph_sources() == ["model.dbt_test.model1", "model.dbt_test.model5", "model.dbt_test.model6"]
+
+
+def test_more_complex_dependencies_5():
+    # given
+    manifest_path = manifest_file_with_models(
+        {
+            "model.dbt_test.model5": [],
+            "model.dbt_test.model4": [],
+            "model.dbt_test.model3": ["model.dbt_test.model5", "model.dbt_test.model4"],
+            "model.dbt_test.model2": ["model.dbt_test.model3"],
+            "test.dbt_test.test1": ["model.dbt_test.model4", "model.dbt_test.model5"],
+        }
+    )
+
+    # when
+    graph = create_tasks_graph(
+        manifest=load_dbt_manifest(manifest_path),
+        graph_config=GraphConfiguration(check_all_deps_for_multiple_deps_tests=True),
+    )
+
+    # then
+    assert list(graph.get_graph_edges()) == [
+        ("model.dbt_test.model5", "model.dbt_test.model3"),
+        ("model.dbt_test.model5", "model4_model5_test"),
+        ("model.dbt_test.model4", "model.dbt_test.model3"),
+        ("model.dbt_test.model4", "model4_model5_test"),
+        ("model.dbt_test.model3", "model.dbt_test.model2"),
+        ("model4_model5_test", "model.dbt_test.model3"),
+    ]
+    assert list(graph.get_graph_nodes()) == [
+        ("model.dbt_test.model5", {"select": "model5", "depends_on": [], "node_type": NodeType.RUN_TEST}),
+        ("model.dbt_test.model4", {"select": "model4", "depends_on": [], "node_type": NodeType.RUN_TEST}),
+        (
+            "model.dbt_test.model3",
+            {
+                "select": "model3",
+                "depends_on": ["model.dbt_test.model5", "model.dbt_test.model4"],
+                "node_type": NodeType.RUN_TEST,
+            },
+        ),
+        (
+            "model.dbt_test.model2",
+            {"select": "model2", "depends_on": ["model.dbt_test.model3"], "node_type": NodeType.RUN_TEST},
+        ),
+        (
+            "model4_model5_test",
+            {
+                "select": "test1",
+                "depends_on": ["model.dbt_test.model4", "model.dbt_test.model5"],
+                "node_type": NodeType.MULTIPLE_DEPS_TEST,
+            },
+        ),
+    ]
+    assert graph.get_graph_sinks() == ["model.dbt_test.model2"]
+    assert graph.get_graph_sources() == ["model.dbt_test.model5", "model.dbt_test.model4"]
