@@ -39,7 +39,7 @@ class GraphConfiguration:
     dbt_manifest_props: dict[str, str] = field(default_factory=dict)
     enable_dags_dependencies: bool = False
     show_ephemeral_models: bool = False
-    check_all_deps_for_multiple_deps_tests: bool = False
+    check_all_deps_for_multiple_deps_tests: bool = True
 
 
 class DbtManifestGraph:

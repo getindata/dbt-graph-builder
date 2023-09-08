@@ -105,7 +105,10 @@ def test_more_complex_dependencies_2():
     )
 
     # when
-    graph = create_tasks_graph(manifest=load_dbt_manifest(manifest_path))
+    graph = create_tasks_graph(
+        manifest=load_dbt_manifest(manifest_path),
+        graph_config=GraphConfiguration(check_all_deps_for_multiple_deps_tests=False),
+    )
 
     # then
     assert list(graph.get_graph_edges()) == [
