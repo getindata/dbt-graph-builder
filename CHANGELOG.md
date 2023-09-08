@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2023-09-08
+
 ## [0.6.3] - 2023-08-04
 
 ## [0.6.2] - 2023-08-03
@@ -20,7 +22,9 @@
 
 ## [0.2.0] - 2023-06-28
 
-[Unreleased]: https://github.com/getindata/dbt-graph-builder/compare/0.6.3...HEAD
+[Unreleased]: https://github.com/getindata/dbt-graph-builder/compare/0.7.0...HEAD
+
+[0.7.0]: https://github.com/getindata/dbt-graph-builder/compare/0.6.3...0.7.0
 
 [0.6.3]: https://github.com/getindata/dbt-graph-builder/compare/0.6.2...0.6.3
 
